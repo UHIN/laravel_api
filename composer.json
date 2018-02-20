@@ -1,0 +1,15 @@
+{
+    "name": "uhin/laravel_api",
+    "authors": [
+        {
+            "name": "rmclelland",
+            "email": "rmclelland@uhin.org"
+        },
+        {
+            "name": "chejazi",
+            "email": "chejazi@uhin.org"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
