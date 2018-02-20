@@ -10,7 +10,6 @@
             "email": "chejazi@uhin.org"
         }
     ],
-    "minimum-stability": "dev",
     "require": {},
     "version": "1.0.0",
     "license": "MIT"
