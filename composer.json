@@ -14,15 +14,10 @@
     "require": {},
     "version": "1.0.0",
     "license": "MIT",
-    "extra": {
-        "laravel": {
-            "providers": [
-                "uhin\\laravel_api\\ServiceProvider"
-            ],
-            "aliases": {
-                "laravel_api": "uhin\\laravel_api\\Facade"
-            }
+    "autoload": {
+        "psr-4": {
+            "uhin\\laravel_api\\": "src/"
         }
-    }   
+    },
     
 }
