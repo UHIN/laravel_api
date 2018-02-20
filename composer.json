@@ -18,6 +18,5 @@
         "psr-4": {
             "uhin\\laravel_api\\": "src/"
         }
-    },
-    
+    }
 }
