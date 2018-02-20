@@ -13,6 +13,16 @@
     "minimum-stability": "dev",
     "require": {},
     "version": "1.0.0",
-    "license": "MIT"
+    "license": "MIT",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "uhin\\laravel_api\\ServiceProvider"
+            ],
+            "aliases": {
+                "laravel_api": "uhin\\laravel_api\\Facade"
+            }
+        }
+    }   
     
 }
