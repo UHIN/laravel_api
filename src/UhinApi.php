@@ -208,7 +208,7 @@ class UhinApi
         return gmdate('Y-m-d H:i:s', $timestamp);
     }
 
-    public static function patchData(Model $model, Request $request)
+    public static function fillModel(Model $model, Request $request)
     {
         foreach( $request->input('data') as $key => $value) {
             if( $key === 'id' || $key ==='type')
