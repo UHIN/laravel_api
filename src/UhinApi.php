@@ -1,14 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: rmclelland
- * Date: 2/20/18
- * Time: 12:57 PM
- */
 
 namespace uhin\laravel_api;
-
-
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
