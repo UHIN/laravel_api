@@ -21,7 +21,64 @@ class uhin_api
         $query = ($model)->newQuery();
 
         //get filters
-
+        if ($request->has('filters')) {
+            // build the filter object in the structure of:
+            // $filters = {
+            //   'field1': {
+            //     'operator1': 'value',
+            //     'operator2': 'value'
+            //   },
+            //   'field1': {
+            //     'operator1': 'value',
+            //     'operator2': 'value'
+            //   },
+            // }
+            $filters = [];
+            $raw_filters = $request->query('filters');
+            foreach ($raw_filters as $column => $filter) {
+                $filters[$column] = [];
+                if (!is_array($filter)) {
+                    $filter = ['in' => $filter];
+                }
+                foreach ($filter as $operator => $value) {
+                    $filters[$column][$operator] = $value;
+                }
+            }
+            // Execute the filter queries
+            foreach ($filters as $column => $filter) {
+                foreach ($filter as $operator => $value) {
+                    switch ($operator) {
+                        case 'in':
+                            $query->whereIn($column, explode(',', $value));
+                            break;
+                        case 'not':
+                            $query->whereNotIn($column, explode(',', $value));
+                            break;
+                        case 'prefix':
+                            $query->where($column, 'like', "$value%");
+                            break;
+                        case 'postfix':
+                            $query->where($column, 'like', "%$value");
+                            break;
+                        case 'infix':
+                            $query->where($column, 'like', "%$value%");
+                            break;
+                        case 'before':
+                            $query->where($column, '<=', self::formatDateSearch($value));
+                            break;
+                        case 'after':
+                            $query->where($column, '>=', self::formatDateSearch($value));
+                            break;
+                        case 'null':
+                            $query->whereNull($column);
+                            break;
+                        case 'notnull':
+                            $query->whereNotNull($column);
+                            break;
+                    }
+                }
+            }
+        }
 
         //handle fields
         if($request->has('fields')) {
@@ -87,5 +144,16 @@ class uhin_api
 
     }
 
+
+    /**
+     * Converts a javascript UTC timestamp to a sql date string (ie: 2016-09-21 16:17:54)
+     *
+     * @param $value
+     * @return mixed
+     */
+    private static function formatDateSearch ($value) {
+        $timestamp = intval($value) / 1000.0;
+        return gmdate('Y-m-d H:i:s', $timestamp);
+    }
 
 }
