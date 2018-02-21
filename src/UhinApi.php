@@ -203,9 +203,21 @@ class UhinApi
      * @param $value
      * @return mixed
      */
-    private static function formatDateSearch ($value) {
+    public static function formatDateSearch ($value) {
         $timestamp = intval($value) / 1000.0;
         return gmdate('Y-m-d H:i:s', $timestamp);
     }
+
+    public static function patchData(Model $model, Request $request)
+    {
+        foreach( $request->input('data') as $key => $value) {
+            if( $key === 'id' || $key ==='type')
+                continue;
+            $model->$key = $value;
+        }
+
+        return $model;
+    }
+
 
 }
