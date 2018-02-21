@@ -13,14 +13,51 @@ namespace uhin\laravel_api;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use \Illuminate\Database\Eloquent\Builder;
 
-class uhin_api
+class UhinApi
 {
 
-    public static function parseAPICall(Model $model, Request $request) {
-        $query = ($model)->newQuery();
+    /**
+     * Creates a new query builder that can be used with all of the
+     * "parseXX" methods in this class.
+     *
+     * Example:
+     *   $query = UhinApi::getQueryBuilder(TradingPartner::class);
+     *
+     * @param string $class
+     * @return Builder
+     */
+    public static function getQueryBuilder(string $class) {
+        return (new $class)->newQuery();
+    }
 
-        //get filters
+    /**
+     *
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    public static function parseAll(Builder $query, Request $request) {
+        $query = static::parseFilters($query, $request);
+        $query = static::parseFields($query, $request);
+        $query = static::parseCursor($query, $request);
+        $query = static::parseAPICall($query, $request);
+        return $query;
+    }
+
+    /**
+     * Parses filters.
+     *
+     * Usage:
+     *  example.com?filters[field1][operator1]=value1&filters[field2][operator2]=value
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    public static function parseFilters(Builder $query, Request $request) {
         if ($request->has('filters')) {
             // build the filter object in the structure of:
             // $filters = {
@@ -79,14 +116,38 @@ class uhin_api
                 }
             }
         }
+        return $query;
+    }
 
-        //handle fields
+    /**
+     * Parses fields.
+     *
+     * Usage:
+     *  example.com?fields=field1,field2
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    public static function parseFields(Builder $query, Request $request) {
         if($request->has('fields')) {
             $fields = explode(",", $request->query('fields'));
             $query->select($fields);
         }
+        return $query;
+    }
 
-        //get cursors
+    /**
+     * Parses offset and limit.
+     *
+     * Usage:
+     *  example.com?cursor=100&limit=10
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    public static function parseCursor(Builder $query, Request $request) {
         if($request->has('cursor')) {
             $cursor = $request->query('cursor');
         }
@@ -101,8 +162,20 @@ class uhin_api
         }
 
         $query->skip($cursor)->take($limit);
+        return $query;
+    }
 
-        //get sorting
+    /**
+     * Parses sorts.
+     *
+     * Usage:
+     *  example.com?sort=field1,-field2
+     *
+     * @param Builder $query
+     * @param Request $request
+     * @return Builder
+     */
+    public static function parseSorts(Builder $query, Request $request) {
         if($request->has('sort')){
             $sorts = explode(",", $request->query('sort'));
 
@@ -120,28 +193,7 @@ class uhin_api
             }
 
         }
-
-        return $query->get();
-
-    }
-
-    public static function parseFields(Model $model, Request $request, $id) {
-
-        $query = ($model)->newQuery();
-
-
-        if($request->has('fields')) {
-
-            $fields = explode(",", $request->query('fields'));
-
-            return $query->select($fields)->find($id);;
-
-        } else {
-
-            return  $query->find($id);;
-
-        }
-
+        return $query;
     }
 
 
