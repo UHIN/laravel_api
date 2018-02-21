@@ -43,7 +43,7 @@ class UhinApi
         $query = static::parseFilters($query, $request);
         $query = static::parseFields($query, $request);
         $query = static::parseCursor($query, $request);
-        $query = static::parseAPICall($query, $request);
+        $query = static::parseSorts($query, $request);
         return $query;
     }
 
