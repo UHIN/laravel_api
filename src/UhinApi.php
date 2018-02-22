@@ -50,7 +50,7 @@ class UhinApi
      * @return Builder
      */
     public static function parseFilters(Builder $query, Request $request) {
-        if ($request->has('filters')) {
+        if ($request->filled('filters')) {
             // build the filter object in the structure of:
             // $filters = {
             //   'field1': {
@@ -122,7 +122,7 @@ class UhinApi
      * @return Builder
      */
     public static function parseFields(Builder $query, Request $request) {
-        if($request->has('fields')) {
+        if($request->filled('fields')) {
             $fields = explode(",", $request->query('fields'));
             $query->select($fields);
         }
@@ -140,13 +140,13 @@ class UhinApi
      * @return Builder
      */
     public static function parseCursor(Builder $query, Request $request) {
-        if($request->has('cursor')) {
+        if($request->filled('cursor')) {
             $cursor = $request->query('cursor');
         }
         else {
             $cursor = 0;
         }
-        if($request->has('limit')) {
+        if($request->filled('limit')) {
             $limit = $request->query('limit');
         }
         else {
@@ -168,7 +168,7 @@ class UhinApi
      * @return Builder
      */
     public static function parseSorts(Builder $query, Request $request) {
-        if($request->has('sort')){
+        if($request->filled('sort')){
             $sorts = explode(",", $request->query('sort'));
 
             foreach ($sorts as $sort) {
