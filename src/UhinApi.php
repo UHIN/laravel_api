@@ -123,7 +123,8 @@ class UhinApi
      */
     public static function parseFields(Builder $query, Request $request) {
         if($request->filled('fields')) {
-            $fields = explode(",", $request->query('fields'));
+            $array = $request->query('fields');
+            $fields = explode(",", $array[key($array)]);
             $query->select($fields);
         }
         return $query;
