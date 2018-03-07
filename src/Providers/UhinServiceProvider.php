@@ -1,6 +1,6 @@
 <?php
 
-namespace uhin\laravel_api;
+namespace uhin\laravel_api\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +14,7 @@ class UhinServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'config/uhin.php' => config_path('uhin.php'),
+            __DIR__ . 'config/uhin.php' => config_path('uhin.php'),
         ]);
     }
 
@@ -25,6 +25,10 @@ class UhinServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->commands([
+            \uhin\laravel_api\Commands\WorkerStart::class,
+            \uhin\laravel_api\Commands\WorkerStop::class,
+            \uhin\laravel_api\Commands\MakeWorker::class
+        ]);
     }
 }

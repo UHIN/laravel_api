@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Console\Commands;
+namespace uhin\laravel_api\Commands;
 
 use Illuminate\Console\Command;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitStop extends Command
+class WorkerStop extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'rabbit:stop';
+    protected $signature = 'worker:stop';
 
     /**
      * The console command description.

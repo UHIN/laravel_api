@@ -28,7 +28,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "uhin\\laravel_api\\UhinServiceProvider"
+                "uhin\\laravel_api\\Providers\\UhinServiceProvider"
             ]
         }
     }

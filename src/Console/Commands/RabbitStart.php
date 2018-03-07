@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Console\Commands;
+namespace uhin\laravel_api\Commands;
 
 use Illuminate\Console\Command;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitStart extends Command
+class WorkerStart extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'rabbit:start';
+    protected $signature = 'worker:start';
 
     /**
      * The console command description.
@@ -39,6 +37,7 @@ class RabbitStart extends Command
      */
     public function handle()
     {
-        echo "start";
+        //loop through workers folder
+        //run class start functions
     }
 }
