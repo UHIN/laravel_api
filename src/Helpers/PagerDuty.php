@@ -153,12 +153,8 @@ class PagerDuty
         $host = isset($s['HTTP_X_FORWARDED_HOST']) ? $s['HTTP_X_FORWARDED_HOST'] : (isset($s['HTTP_HOST']) ? $s['HTTP_HOST'] : null);
         $host = isset($host) ? $host : $s['SERVER_NAME'] . $port;
 
-        // uri
-        $uri = $protocol . '://' . $host . $s['REQUEST_URI'];
-        $segments = explode('?', $uri, 2);
-
-        // return the uri without the '?' query params
-        return $segments[0];
+        // build the uri
+        return $protocol . '://' . $host . $s['REQUEST_URI'];
     }
 
     /**
