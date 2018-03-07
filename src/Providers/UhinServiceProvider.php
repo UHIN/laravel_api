@@ -15,7 +15,7 @@ class UhinServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__ . '/../config/uhin.php' => config_path('uhin.php'),
-        ]);
+        ], 'uhin');
     }
 
     /**
