@@ -14,7 +14,7 @@ class UhinServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . 'config/uhin.php' => config_path('uhin.php'),
+            __DIR__ . '/../config/uhin.php' => config_path('uhin.php'),
         ]);
     }
 
