@@ -28,13 +28,13 @@ class PagerDuty
     private $apiKey = null;
 
     /** @var null|string */
+    private $integrationKey = null;
+
+    /** @var null|string */
     private $message = null;
 
     /** @var null|string */
     private $component = null;
-
-    /** @var null|string */
-    private $integrationKey = null;
 
     /** @var null|string */
     private $client = null;
@@ -68,6 +68,17 @@ class PagerDuty
     }
 
     /**
+     * Override the default integration key.
+     *
+     * @param null|string $integrationKey
+     * @return $this
+     */
+    public function setIntegrationKey(?string $integrationKey) {
+        $this->integrationKey = $integrationKey;
+        return $this;
+    }
+
+    /**
      * Sets the message - This is required in order to send a PagerDuty.
      *
      * @param string $message
@@ -86,17 +97,6 @@ class PagerDuty
      */
     public function setComponent(?string $component) {
         $this->component = $component;
-        return $this;
-    }
-
-    /**
-     * Override the default integration key.
-     *
-     * @param null|string $integrationKey
-     * @return $this
-     */
-    public function setIntegrationKey(?string $integrationKey) {
-        $this->integrationKey = $integrationKey;
         return $this;
     }
 
@@ -169,6 +169,12 @@ class PagerDuty
      */
     public function send() {
 
+        // message
+        $message = $this->message;
+        if ($message === null) {
+            throw new InvalidArgumentException("PagerDuty message is null - you must call ->setMessage(...) before sending your message");
+        }
+
         // apiUrl
         $apiUrl = $this->apiUrl;
         if ($apiUrl === null) {
@@ -177,32 +183,26 @@ class PagerDuty
 
         // apiKey
         $apiKey = $this->apiKey;
-        if ($apiKey === null) {
+        if ($apiKey === null || strlen($apiKey) <= 0) {
             $apiKey = config('uhin.pager_duty.api_key');
         }
-        if ($apiKey === null) {
+        if ($apiKey === null || strlen($apiKey) <= 0) {
             throw new InvalidArgumentException('PagerDuty error: You must specify your PAGER_DUTY_API_KEY in the .env file');
         }
 
-        // message
-        $message = $this->message;
-        if ($message === null) {
-            throw new InvalidArgumentException("PagerDuty message is null - you must call ->setMessage(...) before sending your message");
+        // integration key
+        $integrationKey = $this->integrationKey;
+        if ($integrationKey === null || strlen($integrationKey) <= 0) {
+            $integrationKey = config('uhin.pager_duty.integration_key');
+        }
+        if ($integrationKey === null || strlen($integrationKey) <= 0) {
+            throw new InvalidArgumentException('PagerDuty could not find an integration key to use. Either set the PAGER_DUTY_INTEGRATION_KEY in the .env file or use the ->setIntegrationKey(...) method');
         }
 
         // component
         $component = $this->component;
         if ($component === null) {
             $component = null; // component can be null
-        }
-
-        // integration key
-        $integrationKey = $this->integrationKey;
-        if ($integrationKey === null) {
-            $integrationKey = config('uhin.pager_duty.integration_key');
-        }
-        if ($integrationKey === null) {
-            throw new InvalidArgumentException('PagerDuty could not find an integration key to use. Either set the PAGER_DUTY_INTEGRATION_KEY in the .env file or use the ->setIntegrationKey(...) method');
         }
 
         // client
