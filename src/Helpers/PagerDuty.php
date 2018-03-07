@@ -22,6 +22,12 @@ class PagerDuty
 {
 
     /** @var null|string */
+    private $apiUrl = null;
+
+    /** @var null|string */
+    private $apiKey = null;
+
+    /** @var null|string */
     private $message = null;
 
     /** @var null|string */
@@ -39,11 +45,27 @@ class PagerDuty
     /** @var null|string */
     private $action = null;
 
-    /** @var null|string */
-    private $apiUrl = null;
+    /**
+     * Override the default Pager Duty endpoint URL.
+     *
+     * @param null|string $apiUrl
+     * @return $this
+     */
+    public function setApiUrl(?string $apiUrl) {
+        $this->apiUrl = $apiUrl;
+        return $this;
+    }
 
-    /** @var null|string */
-    private $apiKey = null;
+    /**
+     * Override the default Pager Duty API Key.
+     *
+     * @param null|string $apiKey
+     * @return $this
+     */
+    public function setApiKey(?string $apiKey) {
+        $this->apiKey = $apiKey;
+        return $this;
+    }
 
     /**
      * Sets the message - This is required in order to send a PagerDuty.
@@ -112,28 +134,6 @@ class PagerDuty
     }
 
     /**
-     * Override the default Pager Duty endpoint URL.
-     *
-     * @param null|string $apiUrl
-     * @return $this
-     */
-    public function setApiUrl(?string $apiUrl) {
-        $this->apiUrl = $apiUrl;
-        return $this;
-    }
-
-    /**
-     * Override the default Pager Duty API Key.
-     *
-     * @param null|string $apiKey
-     * @return $this
-     */
-    public function setApiKey(?string $apiKey) {
-        $this->apiKey = $apiKey;
-        return $this;
-    }
-
-    /**
      * Builds the URI string for the current service/application, eg: https://api.dev.uhin.org/
      *
      * @return string
@@ -168,6 +168,22 @@ class PagerDuty
      * @return bool
      */
     public function send() {
+
+        // apiUrl
+        $apiUrl = $this->apiUrl;
+        if ($apiUrl === null) {
+            $apiUrl = config('uhin.pager_duty.url');
+        }
+
+        // apiKey
+        $apiKey = $this->apiKey;
+        if ($apiKey === null) {
+            $apiKey = config('uhin.pager_duty.api_key');
+        }
+        if ($apiKey === null) {
+            throw new InvalidArgumentException('PagerDuty error: You must specify your PAGER_DUTY_API_KEY in the .env file');
+        }
+
         // message
         $message = $this->message;
         if ($message === null) {
@@ -205,21 +221,6 @@ class PagerDuty
         $action = $this->action;
         if ($action === null) {
             $action = config('uhin.pager_duty.action');
-        }
-
-        // apiUrl
-        $apiUrl = $this->apiUrl;
-        if ($apiUrl === null) {
-            $apiUrl = config('uhin.pager_duty.url');
-        }
-
-        // apiKey
-        $apiKey = $this->apiKey;
-        if ($apiKey === null) {
-            $apiKey = config('uhin.pager_duty.api_key');
-        }
-        if ($apiKey === null) {
-            throw new InvalidArgumentException('PagerDuty error: You must specify your PAGER_DUTY_API_KEY in the .env file');
         }
 
         // Gather all of the server variables
