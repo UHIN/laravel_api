@@ -73,7 +73,6 @@ class UhinApi
                     $filters[$column][$operator] = $value;
                 }
             }
-
             // Execute the filter queries
             foreach ($filters as $column => $filter) {
                 foreach ($filter as $operator => $value) {
