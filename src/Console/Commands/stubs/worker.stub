@@ -2,7 +2,16 @@
 
 namespace DummyNamespace;
 
-class DummyClass
+use uhin\laravel_api\UhinApi\Workers;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
+
+class DummyClass extends BaseRabbitWorker
 {
-    //
+    protected numberOfWorkers = 20;
+
+    public function run() {
+
+    }
+
 }
