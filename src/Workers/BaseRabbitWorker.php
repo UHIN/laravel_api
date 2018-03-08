@@ -3,9 +3,10 @@
 namespace uhin\laravel_api\Workers;
 
 
-class BaseRabbitWorker extends BaseWorker
+abstract class BaseRabbitWorker extends BaseWorker
 {
-
+    protected $lockfile;
+    protected $numberOfWorkers = 1;
 
     public  function start($pidName) {
 
@@ -16,9 +17,6 @@ class BaseRabbitWorker extends BaseWorker
         if (!file_exists($pid_path)) {
             mkdir($pid_path, 0777, true);
         }
-
-        //delete any unlocked pid files
-        //array_map('unlink', glob($pid_path.'*.pid'));
 
         $lock_file = null;
         chdir($pid_path);
@@ -31,7 +29,6 @@ class BaseRabbitWorker extends BaseWorker
                 // Unexpected error
             } else if (!$got_lock && $wouldblock) {
                 // Trying next
-                echo 'locked';
             } else if ($got_lock) {
                 //We got a lock, time to create pid file
                 $file = app_path()."/Workers/".$pidName.".php";
@@ -39,15 +36,18 @@ class BaseRabbitWorker extends BaseWorker
                 $cmd = "php -r 'include ";
                 $cmd .= '"'.$file.'"; ';
                 $cmd .= '$class = new '.static::class;
-                $cmd .= '; $class->run("'.$pidName.'")';
+                $cmd .= '; $class->aquirelock("'.$pidName.'")';
                 $cmd .=";'";
 
-                $command = 'nohup '.$cmd.' > '.storage_path('logs/').'test.log 2>&1 & echo $!';
+                $command = 'nohup '.$cmd.' >> '.storage_path('logs/').'test.log 2>&1 & echo $!';
+                $op = '';
                 exec($command ,$op);
                 $pid = (int)$op[0];
 
                 ftruncate($lock_file, 0);
                 fwrite($lock_file, $pid . "\n");
+                flock($lock_file,LOCK_UN);
+                fclose($lock_file);
             }
 
             if ($i == $this->numberOfWorkers - 1) {
@@ -58,7 +58,7 @@ class BaseRabbitWorker extends BaseWorker
 
     }
 
-    public  function run($name) {
+    public  function aquirelock($name) {
         sleep(1);
 
         $pid_path = storage_path('pids/'.$name.'/');
@@ -90,25 +90,20 @@ class BaseRabbitWorker extends BaseWorker
 
                 if (!$got_lock) {
                     echo "NO LOCK";
-                    echo strval($wouldblock);
                     fclose($lock_file);
                     exit();
                 } else {
                     echo "LOCKED!";
                     echo strval($wouldblock);
+                    $this->lockfile = $lock_file;
+                    $this->run();
                 }
 
-            }
-            else
-            {
-                //couldn't find my lock, so I exit.
-                exit();
             }
 
         }
 
 
     }
-
 
 }

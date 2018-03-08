@@ -1,20 +1,45 @@
 <?php
 
+/*
+ *      To create settings file run:  php artisan vendor:publish --tag=uhin
+ *      In app/Kernel.php file make sure the schedule() function contains:  $schedule->command('worker:start')->everyMinute();
+ *
+ */
+
 namespace DummyNamespace;
 
 require __DIR__.'/../../vendor/autoload.php';
 require_once __DIR__.'/../../bootstrap/app.php';
 
 use uhin\laravel_api\Workers\BaseRabbitWorker;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use uhin\laravel_api\RabbitMQ;
 
 class DummyClass extends BaseRabbitWorker
 {
-    protected $numberOfWorkers = 20;
+     protected $numberOfWorkers = 5;
 
-    public  function run($name) {
-        parent::run($name);
-    }
+        public  function run() {
+            (new RabbitMQ)->receive(function($message) {
+
+                /* @var \PhpAmqpLib\Channel\AMQPChannel $channel */
+               $channel = $message->delivery_info['channel'];
+               $deliveryTag = $message->delivery_info['delivery_tag'];
+
+               //Add worker logic here
+               echo $message->body;
+
+               //Message successfully processed, mark as completed in Rabbit
+               $channel->basic_ack($deliveryTag);
+
+               //Message is bad, send to dead letter queue.
+               $channel->basic_nack($deliveryTag);
+
+               //Message needs to be reprocessed place back in queue.
+               $channel->basic_nack($deliveryTag, false, true);
+
+
+            });
+
+        }
 
 }
