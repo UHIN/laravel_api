@@ -34,14 +34,14 @@ abstract class BaseRabbitWorker extends BaseWorker
                 //We got a lock, time to create pid file
                 $file = app_path()."/Workers/".$pidName.".php";
 
-                $cmd = "php -r 'include ";
-                $cmd .= '"'.base_path().'/vendor/autoload.php"; $app = include ';
-                $cmd .= '"'.base_path().'/bootstrap/app.php"; ';
+                $cmd = "php -r '";
+                $cmd .= 'include "'.base_path().'/vendor/autoload.php"; ';
+                $cmd .= '$app = include "'.base_path().'/bootstrap/app.php"; ';
                 $cmd .= '$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);';
                 $cmd .= '$kernel->bootstrap(); ';
-                $cmd .= '$class = new '.static::class;
-                $cmd .= '; $class->aquirelock("'.$pidName.'")';
-                $cmd .=";'";
+                $cmd .= '$class = new '.static::class.'; ';
+                $cmd .= '$class->aquirelock("'.$pidName.'");';
+                $cmd .= "'";
 
                 $command = 'nohup '.$cmd.' >> '.storage_path('logs/').'test.log 2>&1 & echo $!';
                 $op = '';
