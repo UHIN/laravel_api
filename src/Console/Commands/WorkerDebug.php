@@ -18,7 +18,7 @@ class WorkerDebug extends Command
      *
      * @var string
      */
-    protected $description = 'Stop all workers in the app/Workers folder';
+    protected $description = 'Allows you to debug a worker.';
 
     /**
      * Create a new command instance.
@@ -37,12 +37,17 @@ class WorkerDebug extends Command
      */
     public function handle()
     {
-        $name = $this->argument('name');
-
+       if($this->argument('name')=='') {
+           $name = $this->ask('What worker would you like to debug?');
+       } else {
+           $name = $this->argument('name');
+       }
 
         $class = "App\Workers\\".$name;
 
         $worker = new $class;
+
+        $this->warn('Press Ctrl-C to end debugging session.');
 
         $worker->run();
 
