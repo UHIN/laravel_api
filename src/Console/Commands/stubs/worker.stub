@@ -14,30 +14,31 @@ use uhin\laravel_api\RabbitMQ;
 
 class DummyClass extends BaseRabbitWorker
 {
-     protected $numberOfWorkers = 5;
 
-        public  function run() {
-            (new RabbitMQ)->receive(function($message) {
+    protected $numberOfWorkers = 5;
 
-                /* @var \PhpAmqpLib\Channel\AMQPChannel $channel */
-               $channel = $message->delivery_info['channel'];
-               $deliveryTag = $message->delivery_info['delivery_tag'];
+    public  function run() {
+        (new RabbitMQ)->receive(function($message) {
 
-               //Add worker logic here
-               echo $message->body;
+            /* @var \PhpAmqpLib\Channel\AMQPChannel $channel */
+           $channel = $message->delivery_info['channel'];
+           $deliveryTag = $message->delivery_info['delivery_tag'];
 
-               //Message successfully processed, mark as completed in Rabbit
-               $channel->basic_ack($deliveryTag);
+           //Add worker logic here
+           echo $message->body;
 
-               //Message is bad, send to dead letter queue.
-               $channel->basic_nack($deliveryTag);
+           //Message successfully processed, mark as completed in Rabbit
+           $channel->basic_ack($deliveryTag);
 
-               //Message needs to be reprocessed place back in queue.
-               $channel->basic_nack($deliveryTag, false, true);
+           //Message is bad, send to dead letter queue.
+           $channel->basic_nack($deliveryTag);
+
+           //Message needs to be reprocessed place back in queue.
+           $channel->basic_nack($deliveryTag, false, true);
 
 
-            });
+        });
 
-        }
+    }
 
 }
