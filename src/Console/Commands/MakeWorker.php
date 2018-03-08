@@ -57,6 +57,8 @@ class MakeWorker extends GeneratorCommand
 
         parent::handle();
 
+        $this->warn( 'In app/Kernel.php file make sure the schedule() function contains:  $schedule->command(\'worker:start\')->everyMinute();');
+
 
     }
 }

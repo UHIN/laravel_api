@@ -1,10 +1,9 @@
 <?php
 
-/*
- *      To create settings file run:  php artisan vendor:publish --tag=uhin
- *      In app/Kernel.php file make sure the schedule() function contains:  $schedule->command('worker:start')->everyMinute();
- *
- */
+
+//  In app/Kernel.php file make sure the schedule() function contains:  $schedule->command('worker:start')->everyMinute();
+
+
 
 namespace DummyNamespace;
 
