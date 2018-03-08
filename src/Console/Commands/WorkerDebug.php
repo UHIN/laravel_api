@@ -40,7 +40,7 @@ class WorkerDebug extends Command
         $name = $this->argument('name');
 
 
-        $class = '\App\Workers\$name';
+        $class = "App\Workers\\".$name;
 
         $worker = new $class;
 
