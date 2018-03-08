@@ -37,6 +37,6 @@ class WorkerStop extends Command
      */
     public function handle()
     {
-        exec("pkill -f ");
+        exec("pkill -f 'php -r include'");
     }
 }
