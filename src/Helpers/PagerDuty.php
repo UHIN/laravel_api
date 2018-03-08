@@ -45,6 +45,17 @@ class PagerDuty
     /** @var null|string */
     private $action = null;
 
+
+    public function __construct()
+    {
+        $this->apiUrl = config('uhin.pager_duty.url');
+        $this->apiKey = config('uhin.pager_duty.api_key');
+        $this->integrationKey = config('uhin.pager_duty.integration_key');
+        $this->client = config('uhin.pager_duty.client');
+        $this->severity = config('uhin.pager_duty.severity');
+        $this->action = config('uhin.pager_duty.action');
+    }
+
     /**
      * Override the default Pager Duty endpoint URL.
      *
@@ -174,23 +185,17 @@ class PagerDuty
         // apiUrl
         $apiUrl = $this->apiUrl;
         if ($apiUrl === null) {
-            $apiUrl = config('uhin.pager_duty.url');
+            throw new InvalidArgumentException('PagerDuty could not find the api url. Either set the PAGER_DUTY_URL in the .env file or use the ->setApiUrl(...) method');
         }
 
         // apiKey
         $apiKey = $this->apiKey;
-        if ($apiKey === null || strlen($apiKey) <= 0) {
-            $apiKey = config('uhin.pager_duty.api_key');
-        }
         if ($apiKey === null || strlen($apiKey) <= 0) {
             throw new InvalidArgumentException('PagerDuty error: You must specify your PAGER_DUTY_API_KEY in the .env file');
         }
 
         // integration key
         $integrationKey = $this->integrationKey;
-        if ($integrationKey === null || strlen($integrationKey) <= 0) {
-            $integrationKey = config('uhin.pager_duty.integration_key');
-        }
         if ($integrationKey === null || strlen($integrationKey) <= 0) {
             throw new InvalidArgumentException('PagerDuty could not find an integration key to use. Either set the PAGER_DUTY_INTEGRATION_KEY in the .env file or use the ->setIntegrationKey(...) method');
         }
@@ -204,19 +209,19 @@ class PagerDuty
         // client
         $client = $this->client;
         if ($client === null) {
-            $client = config('uhin.pager_duty.client');
+            throw new InvalidArgumentException('PagerDuty could not find the client. Either set the PAGER_DUTY_CLIENT in the .env file or use the ->setClient(...) method');
         }
 
         // severity
         $severity = $this->severity;
         if ($severity === null) {
-            $severity = config('uhin.pager_duty.severity');
+            $severity = 'info';
         }
 
         // action
         $action = $this->action;
         if ($action === null) {
-            $action = config('uhin.pager_duty.action');
+            $action = 'trigger';
         }
 
         // Gather all of the server variables
@@ -278,6 +283,7 @@ class PagerDuty
                 throw new Exception("Status code: {$info['http_code']} returned from PagerDuty");
             }
 
+            /** @noinspection PhpUndefinedMethodInspection */
             Log::debug("Event triggered in PagerDuty. " . $result);
             return true;
         } catch (Exception $e) {
@@ -286,6 +292,8 @@ class PagerDuty
                 $e->getMessage() .
                 json_encode($args, JSON_PRETTY_PRINT) .
                 json_encode(json_decode($result), JSON_PRETTY_PRINT);
+
+            /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
             return false;
         }
