@@ -33,5 +33,6 @@ class UhinServiceProvider extends ServiceProvider
             \uhin\laravel_api\Commands\WorkerStop::class,
             \uhin\laravel_api\Commands\UhinInit::class,
         ]);
+
     }
 }
