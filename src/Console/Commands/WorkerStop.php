@@ -11,14 +11,14 @@ class WorkerStop extends Command
      *
      * @var string
      */
-    protected $signature = 'worker:stop';
+    protected $signature = 'uhin:worker:stop';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Stop all workers in the app/Workers folder';
 
     /**
      * Create a new command instance.

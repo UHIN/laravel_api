@@ -17,7 +17,7 @@ class MakeWorker extends GeneratorCommand
      *
      * @var string
      */
-    protected $signature = 'make:worker {name} {--t|type=rabbit}';
+    protected $signature = 'uhin:make:worker {name} {--t|type=rabbit}';
 
     /**
      *php The console command description.

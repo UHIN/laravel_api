@@ -11,14 +11,14 @@ class WorkerStart extends Command
      *
      * @var string
      */
-    protected $signature = 'worker:start';
+    protected $signature = 'uhin:worker:start';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Start all workers in the app/Workers folder';
 
     /**
      * Create a new command instance.
