@@ -3,6 +3,7 @@
 namespace uhin\laravel_api\Workers;
 
 
+
 abstract class BaseRabbitWorker extends BaseWorker
 {
     protected $lockfile;
@@ -34,7 +35,10 @@ abstract class BaseRabbitWorker extends BaseWorker
                 $file = app_path()."/Workers/".$pidName.".php";
 
                 $cmd = "php -r 'include ";
-                $cmd .= '"'.$file.'"; ';
+                $cmd .= '"'.base_path().'/vendor/autoload.php"; $app = include ';
+                $cmd .= '"'.base_path().'/bootstrap/app.php"; ';
+                $cmd .= '$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);';
+                $cmd .= '$kernel->bootstrap(); ';
                 $cmd .= '$class = new '.static::class;
                 $cmd .= '; $class->aquirelock("'.$pidName.'")';
                 $cmd .=";'";
@@ -43,6 +47,7 @@ abstract class BaseRabbitWorker extends BaseWorker
                 $op = '';
                 exec($command ,$op);
                 $pid = (int)$op[0];
+
 
                 ftruncate($lock_file, 0);
                 fwrite($lock_file, $pid . "\n");
@@ -89,12 +94,11 @@ abstract class BaseRabbitWorker extends BaseWorker
                 $got_lock = flock($lock_file, LOCK_EX | LOCK_NB, $wouldblock);
 
                 if (!$got_lock) {
-                    echo "NO LOCK";
+                    //echo "NO LOCK";
                     fclose($lock_file);
                     exit();
                 } else {
-                    echo "LOCKED!";
-                    echo strval($wouldblock);
+                    //echo "LOCKED!";
                     $this->lockfile = $lock_file;
                     $this->run();
                 }

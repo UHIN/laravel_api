@@ -8,8 +8,6 @@
 
 namespace DummyNamespace;
 
-require __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/../../bootstrap/app.php';
 
 use uhin\laravel_api\Workers\BaseRabbitWorker;
 use uhin\laravel_api\RabbitMQ;

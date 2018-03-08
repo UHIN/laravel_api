@@ -2,7 +2,9 @@
 
 namespace uhin\laravel_api;
 
+
 use Exception;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Channel\AMQPChannel;

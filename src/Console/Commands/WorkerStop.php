@@ -37,6 +37,6 @@ class WorkerStop extends Command
      */
     public function handle()
     {
-        echo "stop";
+        exec("pkill -f ");
     }
 }
