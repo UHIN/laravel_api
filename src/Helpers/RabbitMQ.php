@@ -68,8 +68,7 @@ class RabbitMQ
     private $dlxQueueRoutingKey = null;
 
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->host = config('uhin.rabbit.host');
         $this->port = config('uhin.rabbit.port');
         $this->username = config('uhin.rabbit.username');

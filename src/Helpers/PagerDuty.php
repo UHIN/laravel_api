@@ -46,8 +46,7 @@ class PagerDuty
     private $action = null;
 
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->apiUrl = config('uhin.pager_duty.url');
         $this->apiKey = config('uhin.pager_duty.api_key');
         $this->integrationKey = config('uhin.pager_duty.integration_key');
