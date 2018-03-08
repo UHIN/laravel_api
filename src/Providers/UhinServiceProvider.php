@@ -28,7 +28,8 @@ class UhinServiceProvider extends ServiceProvider
         $this->commands([
             \uhin\laravel_api\Commands\WorkerStart::class,
             \uhin\laravel_api\Commands\WorkerStop::class,
-            \uhin\laravel_api\Commands\MakeWorker::class
+            \uhin\laravel_api\Commands\MakeWorker::class,
+            \uhin\laravel_api\Commands\WorkerDebug::class
         ]);
     }
 }
