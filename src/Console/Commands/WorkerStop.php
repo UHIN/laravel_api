@@ -11,7 +11,7 @@ class WorkerStop extends Command
      *
      * @var string
      */
-    protected $signature = 'uhin:worker:stop';
+    protected $signature = 'uhin:workers:stop';
 
     /**
      * The console command description.

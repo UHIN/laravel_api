@@ -1,7 +1,7 @@
 <?php
 
 
-//  In app/Kernel.php file make sure the schedule() function contains:  $schedule->command('worker:start')->everyMinute();
+//  In app/Kernel.php file make sure the schedule() function contains:  $schedule->command('uhin:workers:start')->everyMinute();
 
 
 

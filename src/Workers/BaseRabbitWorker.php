@@ -56,7 +56,7 @@ abstract class BaseRabbitWorker extends BaseWorker
             }
 
             if ($i == $this->numberOfWorkers - 1) {
-                exit;
+                break;
             }
 
         }
@@ -96,7 +96,7 @@ abstract class BaseRabbitWorker extends BaseWorker
                 if (!$got_lock) {
                     //echo "NO LOCK";
                     fclose($lock_file);
-                    exit();
+                    break;
                 } else {
                     //echo "LOCKED!";
                     $this->lockfile = $lock_file;

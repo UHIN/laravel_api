@@ -11,7 +11,7 @@ class WorkerStart extends Command
      *
      * @var string
      */
-    protected $signature = 'uhin:worker:start';
+    protected $signature = 'uhin:workers:start';
 
     /**
      * The console command description.
@@ -55,7 +55,6 @@ class WorkerStart extends Command
 
             $worker->start(basename($filename, ".php"));
 
-            //$worker->run(basename($filename, ".php"));
         }
     }
 }
