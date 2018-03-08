@@ -2,16 +2,19 @@
 
 namespace DummyNamespace;
 
-use uhin\laravel_api\UhinApi\Workers;
+require __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/../../bootstrap/app.php';
+
+use uhin\laravel_api\Workers\BaseRabbitWorker;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class DummyClass extends BaseRabbitWorker
 {
-    protected numberOfWorkers = 20;
+    protected $numberOfWorkers = 20;
 
-    public function run() {
-
+    public  function run($name) {
+        parent::run($name);
     }
 
 }
