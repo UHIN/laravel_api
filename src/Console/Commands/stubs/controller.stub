@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DummyModel;
+use App\Http\Resources\DummyModelResource;
+use Illuminate\Http\Request;
+use uhin\laravel_api\UhinApi;
+
+
+class DummyClass extends Controller
+{
+
+    //Get All
+    public function index(Request $request)
+    {
+
+        $query = UhinApi::getQueryBuilder(DummyModel::class);
+        $query = UhinApi::parseAll($query, $request);
+        return DummyModelResource::collection($query->get());
+
+    }
+
+    //Get by Index
+    public function show(Request $request, $DummyModelVariable)
+    {
+
+        $query = UhinApi::getQueryBuilder(DummyModel::class);
+        $query = UhinApi::parseFields($query, $request);
+        return new DummyModelResource($query->find($DummyModelVariable));
+
+    }
+
+    //Post by index
+    public function store(Request $request)
+    {
+        //Validate required fields
+        //$request->validate([
+        //    'data.name' => 'required',
+        //]);
+
+        //Create new model and save
+        $DummyModelVariable = new DummyModel;
+        $DummyModelVariable = UhinApi::fillModel($DummyModelVariable, $request);
+        $DummyModelVariable->save();
+
+        if($DummyModelVariable = DummyModel::find($DummyModelVariable->id))
+        {
+            $resource = new DummyModelResource($DummyModelVariable);
+            return $resource->response()->setStatusCode(201);
+        }
+
+
+    }
+
+    //Patch by index
+    public function update(Request $request, DummyModel $DummyModelVariable)
+    {
+        $DummyModelVariable = UhinApi::fillModel($DummyModelVariable, $request);
+        $DummyModelVariable->save();
+        return(new DummyModelResource($DummyModelVariable));
+
+    }
+
+    //Delete by index
+    public function destroy(DummyModel $DummyModelVariable)
+    {
+        $DummyModelVariable->delete();
+    }
+}
