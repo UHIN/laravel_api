@@ -19,6 +19,7 @@
       "ramsey/uuid": "^3.7"
 
     },
+    "version": "dev-master",
     "license": "MIT",
     "autoload": {
         "psr-4": {

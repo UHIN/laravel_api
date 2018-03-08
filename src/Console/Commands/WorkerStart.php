@@ -37,7 +37,25 @@ class WorkerStart extends Command
      */
     public function handle()
     {
-        //loop through workers folder
-        //run class start functions
+
+        $workers_path = app_path('Workers/');
+
+        if (!file_exists($workers_path)) {
+            mkdir($workers_path, 0777, true);
+        }
+
+        foreach(glob($workers_path.'*.php') as $filename)
+        {
+
+            include $filename;
+
+            $class = "\App\Workers\\".basename($filename, ".php");
+
+            $worker = new $class;
+
+            $worker->start(basename($filename, ".php"));
+
+            //$worker->run(basename($filename, ".php"));
+        }
     }
 }
