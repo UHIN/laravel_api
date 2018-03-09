@@ -21,15 +21,13 @@ return [
     ],
 
     'rabbit' => [
-        'host'              => env('RABBITMQ_HOST', '127.0.0.1'),
-        'port'              => env('RABBITMQ_PORT', 5672),
-        'username'          => env('RABBITMQ_USERNAME', null),
-        'password'          => env('RABBITMQ_PASSWORD', null),
-        'exchange'          => env('RABBITMQ_EXCHANGE', null),
-        'queue'             => env('RABBITMQ_QUEUE', null),
-        'dlx_queue'         => env('RABBITMQ_DLX_QUEUE', env('RABBITMQ_QUEUE') . '.dlx'),
-        'routing_key'       => env('RABBITMQ_QUEUE_ROUTING_KEY', env('RABBITMQ_QUEUE', null)),
-        'dlx_routing_key'   => env('RABBITMQ_DLX_QUEUE_ROUTING_KEY', env('RABBITMQ_DLX_QUEUE', env('RABBITMQ_QUEUE') . '.dlx')),
+        'host'                  => env('RABBIT_HOST', '127.0.0.1'),
+        'port'                  => env('RABBIT_PORT', 5672),
+        'username'              => env('RABBIT_USERNAME', null),
+        'password'              => env('RABBIT_PASSWORD', null),
+        'exchange'              => env('RABBIT_EXCHANGE', null),
+        'routing_key'           => env('RABBIT_ROUTING_KEY', null),
+        'queue'                 => env('RABBIT_QUEUE', null),
     ],
 
 ];

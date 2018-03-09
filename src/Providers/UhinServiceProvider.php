@@ -27,6 +27,7 @@ class UhinServiceProvider extends ServiceProvider
     {
         $this->commands([
             \uhin\laravel_api\Commands\MakeEndpoint::class,
+            \uhin\laravel_api\Commands\MakeRabbitBuilder::class,
             \uhin\laravel_api\Commands\MakeWorker::class,
             \uhin\laravel_api\Commands\WorkerDebug::class,
             \uhin\laravel_api\Commands\WorkerStart::class,

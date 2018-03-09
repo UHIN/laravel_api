@@ -1,0 +1,36 @@
+<?php
+
+namespace DummyNamespace;
+
+use uhin\laravel_api\RabbitBuilder as BaseRabbitBuilder;
+
+class DummyClass extends BaseRabbitBuilder
+{
+
+    protected function build()
+    {
+        // Grab some files from the config settings
+        $exchange = config('uhin.rabbit.exchange');
+        $queue = config('uhin.rabbit.queue');
+        $routingKey = config('uhin.rabbit.routing_key');
+
+        // Determine the DLX queue info
+        $dlxQueue = $queue . '.dlx';
+        $dlxRoutingKey = 'dlx';
+
+        // Build the Exchange
+        $this->createExchange($exchange);
+
+        // Build the Queues
+        $this->createQueue($dlxQueue);
+        $this->createQueue($queue, [
+            'x-dead-letter-exchange' => $exchange,
+            'x-dead-letter-routing-key' => $dlxRoutingKey,
+        ]);
+
+        // Bind the Queues to the Exchange
+        $this->bind($dlxQueue, $exchange, $dlxRoutingKey);
+        $this->bind($queue, $exchange, $routingKey);
+    }
+
+}

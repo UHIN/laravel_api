@@ -66,6 +66,14 @@ class MakeEndpoint extends GeneratorCommand
         $this->call('make:seed', [
             'name' => str_plural($model) . "TableSeeder",
         ]);
+        // Make a call to the new seeder in the DatabaseSeeder.php file
+        $seederCall = '$this->call(' . str_plural($model) . 'TableSeeder::class);';
+        $seeder = database_path('seeds/DatabaseSeeder.php');
+        $contents = file_get_contents($seeder);
+        if (!str_contains($contents, $seederCall)) {
+            $contents = preg_replace('/(function\s+run.*?\{)(.*?)(\})/s', '${1}${2}' . PHP_EOL . '        ' . $seederCall . PHP_EOL . '    ${3}', $contents);
+            file_put_contents($seeder, $contents);
+        }
 
         // Resource
         $this->stub = __DIR__ . '/stubs/resource.stub';

@@ -64,12 +64,13 @@ class UhinInit extends Command
         file_put_contents($env, "PAGER_DUTY_INTEGRATION_KEY=" . PHP_EOL, FILE_APPEND | LOCK_EX);
 
         // RabbitMQ environment variables
-        file_put_contents($env, PHP_EOL . "RABBITMQ_HOST=" . PHP_EOL, FILE_APPEND | LOCK_EX);
-        file_put_contents($env, "RABBITMQ_PORT=" . PHP_EOL, FILE_APPEND | LOCK_EX);
-        file_put_contents($env, "RABBITMQ_USERNAME=" . PHP_EOL, FILE_APPEND | LOCK_EX);
-        file_put_contents($env, "RABBITMQ_PASSWORD=" . PHP_EOL, FILE_APPEND | LOCK_EX);
-        file_put_contents($env, "RABBITMQ_EXCHANGE=" . PHP_EOL, FILE_APPEND | LOCK_EX);
-        file_put_contents($env, "RABBITMQ_QUEUE=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, PHP_EOL . "RABBIT_HOST=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_PORT=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_USERNAME=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_PASSWORD=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_EXCHANGE=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_ROUTING_KEY=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_QUEUE=" . PHP_EOL, FILE_APPEND | LOCK_EX);
     }
 
     private function removeUsersAndAuth() {
@@ -77,6 +78,10 @@ class UhinInit extends Command
         $this->deleteFiles(database_path('migrations'));
         $this->deleteFile(app_path('User.php'));
         $this->deleteDirectory(app_path('Http/Controllers/Auth'));
+        // put an empty file here so that the folder will be pushed to git even if no factories are created
+        file_put_contents(database_path('factories/.gitignore'), '');
+        // put an empty file here so that the folder will be pushed to git even if no migrations are created
+        file_put_contents(database_path('migrations/.gitignore'), '');
     }
 
     private function removeWebRoutes() {
