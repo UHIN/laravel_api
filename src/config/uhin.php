@@ -29,7 +29,7 @@ return [
         'queue'             => env('RABBITMQ_QUEUE', null),
         'dlx_queue'         => env('RABBITMQ_DLX_QUEUE', env('RABBITMQ_QUEUE') . '.dlx'),
         'routing_key'       => env('RABBITMQ_QUEUE_ROUTING_KEY', env('RABBITMQ_QUEUE', null)),
-        'dlx_routing_key'   => env('RABBITMQ_DLX_QUEUE_ROUTING_KEY', 'dlx'),
+        'dlx_routing_key'   => env('RABBITMQ_DLX_QUEUE_ROUTING_KEY', env('RABBITMQ_DLX_QUEUE', env('RABBITMQ_QUEUE') . '.dlx')),
     ],
 
 ];

@@ -1,12 +1,8 @@
 <?php
 
-
 //  In app/Console/Kernel.php file make sure the schedule() function contains:  $schedule->command('uhin:workers:start')->everyMinute();
 
-
-
 namespace DummyNamespace;
-
 
 use uhin\laravel_api\Workers\BaseRabbitWorker;
 use uhin\laravel_api\RabbitMQ;
@@ -34,7 +30,6 @@ class DummyClass extends BaseRabbitWorker
 
            //Message needs to be reprocessed place back in queue.
            $channel->basic_nack($deliveryTag, false, true);
-
 
         });
 

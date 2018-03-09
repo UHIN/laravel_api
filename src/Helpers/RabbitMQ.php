@@ -4,7 +4,6 @@ namespace uhin\laravel_api;
 
 
 use Exception;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -69,6 +68,9 @@ class RabbitMQ
     /** @var null|string */
     private $dlxQueueRoutingKey = null;
 
+    /** @var boolean */
+    private $withoutDlx = false;
+
 
     public function __construct() {
         $this->host = config('uhin.rabbit.host');
@@ -80,6 +82,7 @@ class RabbitMQ
         $this->dlxQueue = config('uhin.rabbit.dlx_queue');
         $this->queueRoutingKey = config('uhin.rabbit.routing_key');
         $this->dlxQueueRoutingKey = config('uhin.rabbit.dlx_routing_key');
+        $this->withoutDlx = false;
     }
 
     /**
@@ -158,11 +161,15 @@ class RabbitMQ
      * Override the default queue.
      *
      * @param null|string $queue
+     * @param bool $updateRoutingKey
      * @return $this
      */
-    public function setQueue(?string $queue)
+    public function setQueue(?string $queue, $updateRoutingKey = false)
     {
         $this->queue = $queue;
+        if ($updateRoutingKey) {
+            $this->setQueueRoutingKey($queue);
+        }
         return $this;
     }
 
@@ -170,11 +177,15 @@ class RabbitMQ
      * Override the default dead letter exchange queue.
      *
      * @param null|string $dlxQueue
+     * @param bool $updateRoutingKey
      * @return $this
      */
-    public function setDlxQueue(?string $dlxQueue)
+    public function setDlxQueue(?string $dlxQueue, $updateRoutingKey = false)
     {
         $this->dlxQueue = $dlxQueue;
+        if ($updateRoutingKey) {
+            $this->setDlxQueueRoutingKey($dlxQueue);
+        }
         return $this;
     }
 
@@ -199,6 +210,17 @@ class RabbitMQ
     public function setDlxQueueRoutingKey(?string $dlxQueueRoutingKey)
     {
         $this->dlxQueueRoutingKey = $dlxQueueRoutingKey;
+        return $this;
+    }
+
+    /**
+     * Setting this to true will prevent the DLX queue from being created.
+     *
+     * @param boolean $withoutDlx
+     * @return $this
+     */
+    public function withoutDlx(boolean $withoutDlx) {
+        $this->withoutDlx = $withoutDlx;
         return $this;
     }
 
@@ -274,18 +296,27 @@ class RabbitMQ
         // Create the Exchange
         $channel->exchange_declare($exchange, 'direct', false, true, false, false, false);
 
-        // Create the Dead Letter Exchange Queue
-        $channel->queue_declare($dlxQueue, false, true, false, false, false);
+        $queueInformation = null;
+        if ($this->withoutDlx === true) {
+            // Create the actual Queue without any reference to a dlx
+            $queueInformation = $channel->queue_declare($queue, false, true, false, false, false);
 
-        // Create the actual Queue with a reference to the dead letter queue
-        $queueInformation = $channel->queue_declare($queue, false, true, false, false, false, new AMQPTable([
-            'x-dead-letter-exchange' => $exchange,
-            'x-dead-letter-routing-key' => $dlxQueueRoutingKey,
-        ]));
+        } else {
+            // Create the Dead Letter Exchange Queue
+            $channel->queue_declare($dlxQueue, false, true, false, false, false);
+
+            // Bind the dead letter queue to the exchange
+            $channel->queue_bind($dlxQueue, $exchange, $dlxQueueRoutingKey, false);
+
+            // Create the actual Queue with a reference to the dead letter queue
+            $queueInformation = $channel->queue_declare($queue, false, true, false, false, false, new AMQPTable([
+                'x-dead-letter-exchange' => $exchange,
+                'x-dead-letter-routing-key' => $dlxQueueRoutingKey,
+            ]));
+        }
 
         // Bind the queue and dlx to the exchange
         $channel->queue_bind($queue, $exchange, $queueRoutingKey, false);
-        $channel->queue_bind($dlxQueue, $exchange, $dlxQueueRoutingKey, false);
 
         return $queueInformation;
     }
