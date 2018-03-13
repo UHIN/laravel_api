@@ -46,8 +46,27 @@ class RabbitSender
     /** @var null|string */
     private $routingKey = null;
 
-    public function __construct()
+    /**
+     * RabbitSender constructor.
+     *
+     * If $autoBuild is set to true, then the rabbit exchange/queue structure will attempt
+     * to be built in this constructor. You can turn this off by passing $autoBuild=false to
+     * bypass the exchange/queue creation.
+     *
+     * You may also use your own custom RabbitBuilder by using the artisan command uhin:make:rabbit-builder
+     * and then passing in an instance of your custom builder to this method.
+     *
+     * @param bool $autoBuild
+     * @param null|RabbitBuilder $builder
+     */
+    public function __construct(bool $autoBuild = true, ?RabbitBuilder $builder = null)
     {
+        if ($autoBuild) {
+            if ($builder === null) {
+                $builder = new RabbitBuilder();
+            }
+            $builder->execute();
+        }
         $this->host = config('uhin.rabbit.host');
         $this->port = config('uhin.rabbit.port');
         $this->username = config('uhin.rabbit.username');

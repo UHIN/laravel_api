@@ -13,13 +13,8 @@ use PhpAmqpLib\Wire\AMQPTable;
  *
  * @package uhin\laravel_api
  */
-abstract class RabbitBuilder
+class RabbitBuilder
 {
-
-    /**
-     * This function should build all of your RabbitMQ exchanges, queues, and bindings.
-     */
-    protected abstract function build();
 
     /** @var null|string */
     private $host = null;
@@ -273,6 +268,35 @@ abstract class RabbitBuilder
         $this->openConnection();
         $this->build();
         $this->closeConnection();
+    }
+
+    /**
+     * This function should build all of your RabbitMQ exchanges, queues, and bindings.
+     */
+    protected function build()
+    {
+        // Grab some files from the config settings
+        $exchange = config('uhin.rabbit.exchange');
+        $queue = config('uhin.rabbit.queue');
+        $routingKey = config('uhin.rabbit.routing_key');
+
+        // Determine the DLX queue info
+        $dlxQueue = $queue . '.dlx';
+        $dlxRoutingKey = 'dlx';
+
+        // Build the Exchange
+        $this->createExchange($exchange);
+
+        // Build the Queues
+        $this->createQueue($dlxQueue);
+        $this->createQueue($queue, [
+            'x-dead-letter-exchange' => $exchange,
+            'x-dead-letter-routing-key' => $dlxRoutingKey,
+        ]);
+
+        // Bind the Queues to the Exchange
+        $this->bind($dlxQueue, $exchange, $dlxRoutingKey);
+        $this->bind($queue, $exchange, $routingKey);
     }
 
 }
