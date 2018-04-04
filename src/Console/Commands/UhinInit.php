@@ -48,13 +48,6 @@ class UhinInit extends Command
         $this->copyStub($stub, $destination);
     }
 
-    private function copyApiRoutes()
-    {
-        $stub = __DIR__ . '/../../config/uhin.php';
-        $destination = config_path('uhin.php');
-        $this->copyStub($stub, $destination);
-    }
-
     private function fillEnv()
     {
         $env = base_path('.env');
@@ -100,5 +93,11 @@ class UhinInit extends Command
         $destination = base_path('routes/api.php');
         $this->deleteFile($destination);
         $this->copyStub($stub, $destination);
+
+        // Remove the API throttling setting
+        $httpKernel = app_path('Http/Kernel.php');
+        $contents = file_get_contents($httpKernel);
+        $contents = preg_replace('/(\$middlewareGroups.*?\\\'api\\\'.*?\[.*?)(\\\'throttle.*?\\\')(.*?])/s', '${1}// ${2}${3}', $contents);
+        file_put_contents($httpKernel, $contents);
     }
 }
