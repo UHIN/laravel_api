@@ -242,6 +242,7 @@ class RabbitReceiver
                 } catch(Exception $e) {
                     /** @noinspection PhpUndefinedMethodInspection */
                     Log::debug("Error while reading queue . {$this->host}:{$this->port} {$this->queue}: " . $e->getMessage());
+                    die();
                 }
             }
 
