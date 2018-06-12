@@ -31,6 +31,9 @@ class UhinInit extends Command
         $this->copyConfig();
         $this->info('Config file copied');
 
+        $this->copyHandler();
+        $this->info('Exception file copied');
+
         $this->fillEnv();
         $this->info('Environment variables copied');
 
@@ -39,6 +42,13 @@ class UhinInit extends Command
 
         $this->removeWebRoutes();
         $this->info('Web routes removed');
+    }
+
+    private function copyConfig()
+    {
+        $stub = __DIR__ . '/../../Helpers/Handler.php';
+        $destination = app_path('Exceptions/Handler.php');
+        $this->copyStub($stub, $destination);
     }
 
     private function copyConfig()
