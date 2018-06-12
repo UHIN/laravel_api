@@ -55,6 +55,7 @@ class UhinInit extends Command
     {
         $stub = __DIR__ . '/../../Helpers/Handler.php';
         $destination = app_path('Exceptions/Handler.php');
+        $this->deleteFile($destination);
         $this->copyStub($stub, $destination);
     }
 
