@@ -5,7 +5,7 @@
 namespace DummyNamespace;
 
 use uhin\laravel_api\Workers\BaseRabbitWorker;
-use uhin\laravel_api\RabbitMQ;
+use uhin\laravel_api\RabbitReceiver;
 
 class DummyClass extends BaseRabbitWorker
 {
@@ -13,7 +13,7 @@ class DummyClass extends BaseRabbitWorker
     protected $numberOfWorkers = 5;
 
     public  function run() {
-        (new RabbitMQ)->receive(function($message) {
+        (new RabbitReceiver)->receive(function($message) {
 
             /* @var \PhpAmqpLib\Channel\AMQPChannel $channel */
            $channel = $message->delivery_info['channel'];
