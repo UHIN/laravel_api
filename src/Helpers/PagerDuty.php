@@ -161,7 +161,7 @@ class PagerDuty
 
         // host
         $host = array_key_exists('HTTP_X_FORWARDED_HOST', $s) && isset($s['HTTP_X_FORWARDED_HOST']) ? $s['HTTP_X_FORWARDED_HOST'] : (array_key_exists('HTTP_HOST', $s) && isset($s['HTTP_HOST']) ? $s['HTTP_HOST'] : null);
-        $host = isset($host) ? $host : $s['SERVER_NAME'] . $port;
+        $host = isset($host) ? $host : (array_key_exists('SERVER_NAME', $s) ? $s['SERVER_NAME'] : $s['USER']) . $port;
 
         // build the uri
         return $protocol . '://' . $host . $s['REQUEST_URI'];
