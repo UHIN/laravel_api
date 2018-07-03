@@ -164,7 +164,7 @@ class PagerDuty
         $host = isset($host) ? $host : (array_key_exists('SERVER_NAME', $s) ? $s['SERVER_NAME'] : $s['USER']) . $port;
 
         // build the uri
-        return $protocol . '://' . $host . $s['REQUEST_URI'];
+        return $protocol . '://' . $host . (array_key_exists('REQUEST_URI', $s) ? $s['REQUEST_URI'] : 'localhost');
     }
 
     /**
