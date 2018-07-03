@@ -151,16 +151,16 @@ class PagerDuty
     private function buildClientUrl() {
         // protocol
         $s = &$_SERVER;
-        $ssl = (!empty($s['HTTPS']) && $s['HTTPS'] == 'on') ? true:false;
-        $sp = strtolower($s['SERVER_PROTOCOL']);
+        $ssl = (array_key_exists('HTTPS', $s) && !empty($s['HTTPS']) && $s['HTTPS'] == 'on') ? true : false;
+        $sp = array_key_exists('SERVER_PROTOCOL', $s) ? strtolower($s['SERVER_PROTOCOL']) : 'http';
         $protocol = substr($sp, 0, strpos($sp, '/')) . (($ssl) ? 's' : '');
 
         // port
-        $port = $s['SERVER_PORT'];
+        $port = array_key_exists('SERVER_PORT', $s) ? $s['SERVER_PORT'] : '';
         $port = ((!$ssl && $port=='80') || ($ssl && $port=='443')) ? '' : ':'.$port;
 
         // host
-        $host = isset($s['HTTP_X_FORWARDED_HOST']) ? $s['HTTP_X_FORWARDED_HOST'] : (isset($s['HTTP_HOST']) ? $s['HTTP_HOST'] : null);
+        $host = array_key_exists('HTTP_X_FORWARDED_HOST', $s) && isset($s['HTTP_X_FORWARDED_HOST']) ? $s['HTTP_X_FORWARDED_HOST'] : (array_key_exists('HTTP_HOST', $s) && isset($s['HTTP_HOST']) ? $s['HTTP_HOST'] : null);
         $host = isset($host) ? $host : $s['SERVER_NAME'] . $port;
 
         // build the uri
