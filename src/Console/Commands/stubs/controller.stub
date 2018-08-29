@@ -27,14 +27,14 @@ class DummyClass extends Controller
      * Get by Index
      *
      * @param Request $request
-     * @param DummyModel $DummyModelVariable
+     * @param $DummyModelVariableId
      * @return DummyModelResource
      */
-    public function show(Request $request, DummyModel $DummyModelVariable)
+    public function show(Request $request, $DummyModelVariableId)
     {
         $query = UhinApi::getQueryBuilder(DummyModel::class);
         $query = UhinApi::parseFields($query, $request);
-        return new DummyModelResource($query->findOrFail($DummyModelVariable->id));
+        return new DummyModelResource($query->findOrFail($DummyModelVariableId));
     }
 
     /**
