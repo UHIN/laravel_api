@@ -1,5 +1,5 @@
 Route::get('/DummyTypePlural', 'DummyClassController@index');
-Route::get('/DummyTypePlural/{DummyModelVariable}', 'DummyClassController@show');
+Route::get('/DummyTypePlural/{DummyModelVariableId}', 'DummyClassController@show');
 Route::post('/DummyTypePlural', 'DummyClassController@store');
 Route::patch('/DummyTypePlural/{DummyModelVariable}', 'DummyClassController@update');
 Route::delete('/DummyTypePlural/{DummyModelVariable}', 'DummyClassController@destroy');
