@@ -55,10 +55,9 @@ class DummyClass extends Controller
         $DummyModelVariable = UhinApi::fillModel($DummyModelVariable, $request);
         $DummyModelVariable->save();
 
-        if ($DummyModelVariable = DummyModel::findOrFail($DummyModelVariable->id)) {
-            $resource = new DummyModelResource($DummyModelVariable);
-            return $resource->response()->setStatusCode(201);
-        }
+        $DummyModelVariable = DummyModel::findOrFail($DummyModelVariable->id);
+        $resource = new DummyModelResource($DummyModelVariable);
+        return $resource->response()->setStatusCode(201);
     }
 
     /**
