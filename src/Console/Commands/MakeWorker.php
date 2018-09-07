@@ -6,7 +6,6 @@ use Illuminate\Console\Command;
 use Illuminate\Console\GeneratorCommand;
 
 
-
 class MakeWorker extends GeneratorCommand
 {
 
@@ -29,12 +28,23 @@ class MakeWorker extends GeneratorCommand
 
     protected function getStub()
     {
-        return __DIR__ . '/stubs/worker.stub';
+        $type = $this->option('type');
+        switch ($type) {
+            case "database":
+                return __DIR__ . '/stubs/worker-database.stub';
+                break;
+            case "rabbit":
+                return __DIR__ . '/stubs/worker-rabbit.stub';
+                break;
+            default:
+                echo "That type of worker is not currently implemented.";
+                exit();
+        }
     }
 
     protected function getDefaultNamespace($rootNamespace)
     {
-        return $rootNamespace.'\Workers';
+        return $rootNamespace . '\Workers';
     }
 
     /**
@@ -44,21 +54,9 @@ class MakeWorker extends GeneratorCommand
      */
     public function handle()
     {
-        $type = $this->option('type');
-        $name = $this->argument('name');
-
-        switch($type) {
-            case "rabbit":
-                break;
-            default:
-                echo "That type of worker is not currently implemented.";
-                exit();
-        }
-
         parent::handle();
 
-        $this->warn( 'In app/Console/Kernel.php file make sure the schedule() function contains:  $schedule->command(\'uhin:workers:start\')->everyMinute();');
-
-
+        $this->warn('In app/Console/Kernel.php file make sure the schedule() function contains:  $schedule->command(\'uhin:workers:start\')->everyMinute();');
     }
+
 }
