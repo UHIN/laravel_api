@@ -67,6 +67,14 @@ class RabbitBuilder
     }
 
     /**
+     * @return null|string
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    /**
      * Override the default port.
      *
      * @param null|integer $port
@@ -76,6 +84,14 @@ class RabbitBuilder
     {
         $this->port = $port;
         return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPort()
+    {
+        return $this->port;
     }
 
     /**
@@ -91,6 +107,14 @@ class RabbitBuilder
     }
 
     /**
+     * @return null|string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
      * Override the default password.
      *
      * @param null|string $password
@@ -100,6 +124,11 @@ class RabbitBuilder
     {
         $this->password = $password;
         return $this;
+    }
+
+    public function getPassword()
+    {
+        return $this->password;
     }
 
     /**

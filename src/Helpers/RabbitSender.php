@@ -46,6 +46,9 @@ class RabbitSender
     /** @var null|string */
     private $routingKey = null;
 
+    /** @var null|string */
+    private $queue = null;
+
     /**
      * RabbitSender constructor.
      *
@@ -61,18 +64,93 @@ class RabbitSender
      */
     public function __construct(bool $autoBuild = true, ?RabbitBuilder $builder = null)
     {
-        if ($autoBuild) {
-            if ($builder === null) {
-                $builder = new RabbitBuilder();
-            }
+        /* If no builder is passed create a default one */
+        if ($builder === null)
+        {
+            $builder = new RabbitBuilder();
+        }
+
+        /* If requested create the queues and exchange. */
+        if ($autoBuild)
+        {
             $builder->execute();
         }
-        $this->host = config('uhin.rabbit.host');
-        $this->port = config('uhin.rabbit.port');
-        $this->username = config('uhin.rabbit.username');
-        $this->password = config('uhin.rabbit.password');
-        $this->exchange = config('uhin.rabbit.exchange');
-        $this->routingKey = config('uhin.rabbit.routing_key');
+
+        /* Set the connection details from ether config file or from the builder */
+        $this->setSettings($builder);
+    }
+
+    private function setSettings(?RabbitBuilder $builder)
+    {
+        /* Set the host */
+        if(!is_null($builder) && !is_null($builder->getHost()) && function_exists($builder->getHost()))
+        {
+            $this->host = $builder->getHost();
+        }
+        else
+        {
+            $this->host = config('uhin.rabbit.host');
+        }
+
+        /* Set the port */
+        if(!is_null($builder) && !is_null($builder->getPort()) && function_exists($builder->getPort()))
+        {
+            $this->port = $builder->getPort();
+        }
+        else
+        {
+            $this->port = config('uhin.rabbit.port');
+        }
+
+        /* Set the username */
+        if(!is_null($builder) && !is_null($builder->getUsername()) && function_exists($builder->getUsername()))
+        {
+            $this->username = $builder->getUsername();
+        }
+        else
+        {
+            $this->username = config('uhin.rabbit.username');
+        }
+
+        /* Set the password */
+        if(!is_null($builder) && !is_null($builder->getPassword()) && function_exists($builder->getPassword()))
+        {
+            $this->password = $builder->getPassword();
+        }
+        else
+        {
+            $this->password = config('uhin.rabbit.password');
+        }
+
+        /* Set the Exchange */
+        if(!is_null($builder) && !is_null($builder->getExchange()) && function_exists($builder->getExchange()))
+        {
+            $this->exchange = $builder->getExchange();
+        }
+        else
+        {
+            $this->exchange = config('uhin.rabbit.exchange');
+        }
+
+        /* Set the RoutingKey */
+        if(!is_null($builder) && !is_null($builder->getRoutingKey()) && function_exists($builder->getRoutingKey()))
+        {
+            $this->routingKey = $builder->getRoutingKey();
+        }
+        else
+        {
+            $this->routingKey = config('uhin.rabbit.routing_key');
+        }
+
+        /* Set the Queue */
+        if(!is_null($builder) && !is_null($builder->getQueue()) && function_exists($builder->getQueue()))
+        {
+            $this->queue = $builder->getQueue();
+        }
+        else
+        {
+            $this->queue = config('uhin.rabbit.queue');
+        }
     }
 
     /**
