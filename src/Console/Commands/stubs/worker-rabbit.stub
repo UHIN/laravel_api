@@ -13,23 +13,27 @@ class DummyClass extends BaseRabbitWorker
     protected $numberOfWorkers = 5;
 
     public  function run() {
-        (new RabbitReceiver)->receive(function($message) {
+        $rabbit = new RabbitReceiver(new RabbitBuilder());
+        $rabbit->receive(function ($message){
 
             /* @var \PhpAmqpLib\Channel\AMQPChannel $channel */
            $channel = $message->delivery_info['channel'];
            $deliveryTag = $message->delivery_info['delivery_tag'];
 
-           //Add worker logic here
-           echo $message->body;
+           try{
+               //Add worker logic here
+               echo $message->body;
 
-           //Message successfully processed, mark as completed in Rabbit
-           $channel->basic_ack($deliveryTag);
+               //Message successfully processed, mark as completed in Rabbit
+               $channel->basic_ack($deliveryTag);
 
-           //Message is bad, send to dead letter queue.
-           $channel->basic_nack($deliveryTag);
+           } catch (\Exception $e){
+               //Message is bad, send to dead letter queue.
+               $channel->basic_nack($deliveryTag);
 
-           //Message needs to be reprocessed place back in queue.
-           $channel->basic_nack($deliveryTag, false, true);
+               //Message needs to be reprocessed place back in queue.
+               $channel->basic_nack($deliveryTag, false, true);
+           }
 
         });
 

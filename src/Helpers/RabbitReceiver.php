@@ -61,7 +61,7 @@ class RabbitReceiver
     private function setSettings(?RabbitBuilder $builder)
     {
         /* Set the host */
-        if(!is_null($builder) && !is_null($builder->getHost()) && function_exists($builder->getHost()))
+        if(!is_null($builder) && method_exists($builder,'getHost') && !is_null($builder->getHost()))
         {
             $this->host = $builder->getHost();
         }
@@ -71,7 +71,7 @@ class RabbitReceiver
         }
 
         /* Set the port */
-        if(!is_null($builder) && !is_null($builder->getPort()) && function_exists($builder->getPort()))
+        if(!is_null($builder) && method_exists($builder,'getPort') && !is_null($builder->getPort()))
         {
             $this->port = $builder->getPort();
         }
@@ -81,7 +81,7 @@ class RabbitReceiver
         }
 
         /* Set the username */
-        if(!is_null($builder) && !is_null($builder->getUsername()) && function_exists($builder->getUsername()))
+        if(!is_null($builder) && method_exists($builder,'getUsername') && !is_null($builder->getUsername()))
         {
             $this->username = $builder->getUsername();
         }
@@ -91,7 +91,7 @@ class RabbitReceiver
         }
 
         /* Set the password */
-        if(!is_null($builder) && !is_null($builder->getPassword()) && function_exists($builder->getPassword()))
+        if(!is_null($builder) && method_exists($builder,'getPassword') && !is_null($builder->getPassword()))
         {
             $this->password = $builder->getPassword();
         }
@@ -101,7 +101,7 @@ class RabbitReceiver
         }
 
         /* Set the Exchange */
-        if(!is_null($builder) && !is_null($builder->getExchange()) && function_exists($builder->getExchange()))
+        if(!is_null($builder) && method_exists($builder,'getExchange') && !is_null($builder->getExchange()))
         {
             $this->exchange = $builder->getExchange();
         }
@@ -111,7 +111,7 @@ class RabbitReceiver
         }
 
         /* Set the RoutingKey */
-        if(!is_null($builder) && !is_null($builder->getRoutingKey()) && function_exists($builder->getRoutingKey()))
+        if(!is_null($builder) && method_exists($builder,'getRoutingKey') && !is_null($builder->getRoutingKey()))
         {
             $this->routingKey = $builder->getRoutingKey();
         }
@@ -121,7 +121,7 @@ class RabbitReceiver
         }
 
         /* Set the Queue */
-        if(!is_null($builder) && !is_null($builder->getQueue()) && function_exists($builder->getQueue()))
+        if(!is_null($builder) && method_exists($builder,'getQueue') && !is_null($builder->getQueue()))
         {
             $this->queue = $builder->getQueue();
         }
