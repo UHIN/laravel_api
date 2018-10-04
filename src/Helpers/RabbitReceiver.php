@@ -301,7 +301,10 @@ class RabbitReceiver
         $connection = null;
         /** @var AMQPChannel $channel */
         $channel = null;
+
         $this->openConnection($connection, $channel);
+
+        $this->setupGracefulStop($channel, $consumerTag);
 
         try {
             // Start reading the queue
@@ -347,4 +350,29 @@ class RabbitReceiver
         }
     }
 
+    /**
+     * setupGracefulStop
+     * If the consumer would potentially have issues reprocessing the message we want to reduce those issues as much as possible
+     * By watching signals from outside of the application we can know if the connection needs to be closed and close gracefully
+     * @param $channel
+     * @param $consumerTag
+     */
+    protected function setupGracefulStop(&$channel, &$consumerTag) {
+        // Create anonymous $shutdown function because $connection isn't set on the object and there isn't a good way to access with with the pcntl_signals otherwise
+        $shutdown = function($signal , $signinfo) use ($channel, $consumerTag)
+        {
+            Log::info('Shutting down worker gracefully');
+            $channel->basic_cancel($consumerTag, false, true);
+            return;
+        };
+
+        // Watch kill signals (from outside the application) asynchronously
+        pcntl_async_signals(true);
+
+        // Watch for service being killed externally
+        pcntl_signal(SIGINT, $shutdown);
+
+        // Watch for CTRL+C
+        pcntl_signal(SIGTERM, $shutdown);
+    }
 }
