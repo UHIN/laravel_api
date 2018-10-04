@@ -359,4 +359,73 @@ class RabbitSender
         }
     }
 
+    public function sendBatch(array $messages, ?AMQPStreamConnection $connection = null, ?AMQPChannel $channel = null)
+    {
+        // exchange
+        $exchange = $this->exchange;
+        if ($exchange === null) {
+            throw new InvalidArgumentException("RabbitMQ exchange is undefined. Either set the RABBITMQ_EXCHANGE in the .env file or call ->setExchange(...)");
+        }
+
+        // routing key
+        $routingKey = $this->routingKey;
+        if ($routingKey === null) {
+            throw new InvalidArgumentException("RabbitMQ routing key is undefined. Either set the RABBITMQ_QUEUE_ROUTING_KEY in the .env file or call ->setRoutingKey(...)");
+        }
+
+        // message
+        if (empty($messages)) {
+            throw new InvalidArgumentException("RabbitMQ messages is empty - you must provide a non-empty array of messages to send.");
+        }
+
+        // Open the connection
+        $openedConnection = false;
+        if ($connection === null || $channel === null) {
+            $openedConnection = $this->openConnection($connection, $channel);
+        }
+
+        try {
+            // Send the messages
+            foreach ($messages as $message)
+            {
+                $amqpMessage = new AMQPMessage($message, [
+                    'delivery_mode' => 2,
+                ]);
+
+                $channel->batch_basic_publish($amqpMessage, $exchange, $routingKey);
+            }
+
+            $channel->publish_batch();
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            if (config('app.debug'))
+            {
+                Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+            }
+            return true;
+        } catch (Exception $e) {
+            $message = "Error in " . __FILE__ . " line " . __LINE__ .
+                " - Failed to publish message. " .
+                $e->getMessage() .
+                json_encode([
+                    'message_length' => strlen($message),
+                    'host' => $this->host,
+                    'port' => $this->port,
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'exchange' => $this->exchange,
+                    'routingKey' => $this->routingKey,
+                ], JSON_PRETTY_PRINT);
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            Log::error($message);
+            return false;
+        } finally {
+            if ($openedConnection) {
+                // Close the connection
+                $this->closeConnection($connection, $channel);
+            }
+        }
+    }
+
 }

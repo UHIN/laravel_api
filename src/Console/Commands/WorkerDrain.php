@@ -37,6 +37,23 @@ class WorkerDrain extends Command
      */
     public function handle()
     {
+        file_put_contents(
+            storage_path('framework/drain'),
+            json_encode($this->getDownFilePayload(), JSON_PRETTY_PRINT)
+        );
 
+        $this->comment('Workers are draining...');
+    }
+
+    /**
+     * Get the payload to be placed in the "down" file.
+     *
+     * @return array
+     */
+    protected function getDownFilePayload()
+    {
+        return [
+            'time' => $this->currentTime(),
+        ];
     }
 }
