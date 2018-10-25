@@ -111,4 +111,5 @@ class UhinInit extends Command
         $contents = preg_replace('/(\$middlewareGroups.*?\\\'api\\\'.*?\[.*?)(\\\'throttle.*?\\\')(.*?])/s', '${1}// ${2}${3}', $contents);
         file_put_contents($httpKernel, $contents);
     }
+
 }
