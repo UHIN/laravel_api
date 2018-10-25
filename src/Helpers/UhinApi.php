@@ -201,6 +201,15 @@ class UhinApi
         return gmdate('Y-m-d H:i:s', $timestamp);
     }
 
+    /**
+     * Fills a model with all data from the request except for the 'id' and 'type' attributes.
+     * NOTE: You should only use this function if you are on Laravel 5.6 or lower. Otherwise, use
+     * the fillModelFromValidator function.
+     *
+     * @param Model $model
+     * @param Request $request
+     * @return Model
+     */
     public static function fillModel(Model $model, Request $request)
     {
         foreach( $request->input('data') as $key => $value) {
@@ -212,5 +221,25 @@ class UhinApi
         return $model;
     }
 
+    /**
+     * Fills a model with the given validated data. This will only strip the 'type'
+     * attribute from the validated data.
+     *
+     * @param Model $model
+     * @param array $validatedData
+     * @param null|string $dataPrefix
+     * @return Model
+     */
+    public static function fillModelFromValidator(Model $model, array $validatedData, ?string $dataPrefix = null)
+    {
+        if ($dataPrefix !== null) {
+            $validatedData = $validatedData[$dataPrefix];
+        }
+        if (array_key_exists('type', $validatedData)) {
+            unset($validatedData['type']);
+        }
+        $model->fill($validatedData);
+        return $model;
+    }
 
 }
