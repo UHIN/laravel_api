@@ -46,6 +46,9 @@ class RabbitSender
     /** @var null|string */
     private $routingKey = null;
 
+    /** @var null|string */
+    private $queue = null;
+
     /**
      * RabbitSender constructor.
      *
@@ -61,18 +64,93 @@ class RabbitSender
      */
     public function __construct(bool $autoBuild = true, ?RabbitBuilder $builder = null)
     {
-        if ($autoBuild) {
-            if ($builder === null) {
-                $builder = new RabbitBuilder();
-            }
+        /* If no builder is passed create a default one */
+        if ($builder === null)
+        {
+            $builder = new RabbitBuilder();
+        }
+
+        /* If requested create the queues and exchange. */
+        if ($autoBuild)
+        {
             $builder->execute();
         }
-        $this->host = config('uhin.rabbit.host');
-        $this->port = config('uhin.rabbit.port');
-        $this->username = config('uhin.rabbit.username');
-        $this->password = config('uhin.rabbit.password');
-        $this->exchange = config('uhin.rabbit.exchange');
-        $this->routingKey = config('uhin.rabbit.routing_key');
+
+        /* Set the connection details from ether config file or from the builder */
+        $this->setSettings($builder);
+    }
+
+    private function setSettings(?RabbitBuilder $builder)
+    {
+        /* Set the host */
+        if(!is_null($builder) && method_exists($builder,'getHost') && !is_null($builder->getHost()))
+        {
+            $this->host = $builder->getHost();
+        }
+        else
+        {
+            $this->host = config('uhin.rabbit.host');
+        }
+
+        /* Set the port */
+        if(!is_null($builder) && method_exists($builder,'getPort') && !is_null($builder->getPort()))
+        {
+            $this->port = $builder->getPort();
+        }
+        else
+        {
+            $this->port = config('uhin.rabbit.port');
+        }
+
+        /* Set the username */
+        if(!is_null($builder) && method_exists($builder,'getUsername') && !is_null($builder->getUsername()))
+        {
+            $this->username = $builder->getUsername();
+        }
+        else
+        {
+            $this->username = config('uhin.rabbit.username');
+        }
+
+        /* Set the password */
+        if(!is_null($builder) && method_exists($builder,'getPassword') && !is_null($builder->getPassword()))
+        {
+            $this->password = $builder->getPassword();
+        }
+        else
+        {
+            $this->password = config('uhin.rabbit.password');
+        }
+
+        /* Set the Exchange */
+        if(!is_null($builder) && method_exists($builder,'getExchange') && !is_null($builder->getExchange()))
+        {
+            $this->exchange = $builder->getExchange();
+        }
+        else
+        {
+            $this->exchange = config('uhin.rabbit.exchange');
+        }
+
+        /* Set the RoutingKey */
+        if(!is_null($builder) && method_exists($builder,'getRoutingKey') && !is_null($builder->getRoutingKey()))
+        {
+            $this->routingKey = $builder->getRoutingKey();
+        }
+        else
+        {
+            $this->routingKey = config('uhin.rabbit.routing_key');
+        }
+
+        /* Set the Queue */
+        if(!is_null($builder) && method_exists($builder,'getQueue') && !is_null($builder->getQueue()))
+        {
+            $this->queue = $builder->getQueue();
+        }
+        else
+        {
+            $this->queue = config('uhin.rabbit.queue');
+        }
     }
 
     /**
@@ -251,7 +329,79 @@ class RabbitSender
             $channel->basic_publish($amqpMessage, $exchange, $routingKey);
 
             /** @noinspection PhpUndefinedMethodInspection */
-            Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+            if (config('app.debug'))
+            {
+                Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+            }
+            return true;
+        } catch (Exception $e) {
+            $message = "Error in " . __FILE__ . " line " . __LINE__ .
+                " - Failed to publish message. " .
+                $e->getMessage() .
+                json_encode([
+                    'message_length' => strlen($message),
+                    'host' => $this->host,
+                    'port' => $this->port,
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'exchange' => $this->exchange,
+                    'routingKey' => $this->routingKey,
+                ], JSON_PRETTY_PRINT);
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            Log::error($message);
+            return false;
+        } finally {
+            if ($openedConnection) {
+                // Close the connection
+                $this->closeConnection($connection, $channel);
+            }
+        }
+    }
+
+    public function sendBatch(array $messages, ?AMQPStreamConnection $connection = null, ?AMQPChannel $channel = null)
+    {
+        // exchange
+        $exchange = $this->exchange;
+        if ($exchange === null) {
+            throw new InvalidArgumentException("RabbitMQ exchange is undefined. Either set the RABBITMQ_EXCHANGE in the .env file or call ->setExchange(...)");
+        }
+
+        // routing key
+        $routingKey = $this->routingKey;
+        if ($routingKey === null) {
+            throw new InvalidArgumentException("RabbitMQ routing key is undefined. Either set the RABBITMQ_QUEUE_ROUTING_KEY in the .env file or call ->setRoutingKey(...)");
+        }
+
+        // message
+        if (empty($messages)) {
+            throw new InvalidArgumentException("RabbitMQ messages is empty - you must provide a non-empty array of messages to send.");
+        }
+
+        // Open the connection
+        $openedConnection = false;
+        if ($connection === null || $channel === null) {
+            $openedConnection = $this->openConnection($connection, $channel);
+        }
+
+        try {
+            // Send the messages
+            foreach ($messages as $message)
+            {
+                $amqpMessage = new AMQPMessage($message, [
+                    'delivery_mode' => 2,
+                ]);
+
+                $channel->batch_basic_publish($amqpMessage, $exchange, $routingKey);
+            }
+
+            $channel->publish_batch();
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            if (config('app.debug'))
+            {
+                Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+            }
             return true;
         } catch (Exception $e) {
             $message = "Error in " . __FILE__ . " line " . __LINE__ .
