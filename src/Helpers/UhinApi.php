@@ -29,10 +29,11 @@ class UhinApi
      *
      * @param Builder $query
      * @param Request $request
+     * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseAll(Builder $query, Request $request) {
-        $query = static::parseFilters($query, $request);
+    public static function parseAll(Builder $query, Request $request, $filterOverrides = null) {
+        $query = static::parseFilters($query, $request, $filterOverrides);
         $query = static::parseFields($query, $request);
         $query = static::parseCursor($query, $request);
         $query = static::parseSorts($query, $request);
@@ -47,9 +48,10 @@ class UhinApi
      *
      * @param Builder $query
      * @param Request $request
+     * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseFilters(Builder $query, Request $request) {
+    public static function parseFilters(Builder $query, Request $request, $filterOverrides = null) {
         if ($request->filled('filters')) {
             // build the filter object in the structure of:
             // $filters = {
@@ -76,34 +78,41 @@ class UhinApi
             // Execute the filter queries
             foreach ($filters as $column => $filter) {
                 foreach ($filter as $operator => $value) {
-                    switch ($operator) {
-                        case 'in':
-                            $query->whereIn($column, explode(',', $value));
-                            break;
-                        case 'not':
-                            $query->whereNotIn($column, explode(',', $value));
-                            break;
-                        case 'prefix':
-                            $query->where($column, 'like', "$value%");
-                            break;
-                        case 'postfix':
-                            $query->where($column, 'like', "%$value");
-                            break;
-                        case 'infix':
-                            $query->where($column, 'like', "%$value%");
-                            break;
-                        case 'before':
-                            $query->where($column, '<=', self::formatDateSearch($value));
-                            break;
-                        case 'after':
-                            $query->where($column, '>=', self::formatDateSearch($value));
-                            break;
-                        case 'null':
-                            $query->whereNull($column);
-                            break;
-                        case 'notnull':
-                            $query->whereNotNull($column);
-                            break;
+
+                    // First check if this filter has an override handler
+                    $overridden = $filterOverrides && ($filterOverrides($query, $column, $operator, $value) === true);
+
+                    // If no filter override was provided, then proceed
+                    if (!$overridden) {
+                        switch ($operator) {
+                            case 'in':
+                                $query->whereIn($column, explode(',', $value));
+                                break;
+                            case 'not':
+                                $query->whereNotIn($column, explode(',', $value));
+                                break;
+                            case 'prefix':
+                                $query->where($column, 'like', "$value%");
+                                break;
+                            case 'postfix':
+                                $query->where($column, 'like', "%$value");
+                                break;
+                            case 'infix':
+                                $query->where($column, 'like', "%$value%");
+                                break;
+                            case 'before':
+                                $query->where($column, '<=', self::formatDateSearch($value));
+                                break;
+                            case 'after':
+                                $query->where($column, '>=', self::formatDateSearch($value));
+                                break;
+                            case 'null':
+                                $query->whereNull($column);
+                                break;
+                            case 'notnull':
+                                $query->whereNotNull($column);
+                                break;
+                        }
                     }
                 }
             }
