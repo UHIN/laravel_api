@@ -31,6 +31,9 @@ class RabbitConnectionManager
     /** @var null|object */
     private $connections = [];
 
+    //create the private instance variable
+    private static $instance=null;
+
     /**
      * RabbitConnectionManager constructor.
      *
@@ -39,16 +42,33 @@ class RabbitConnectionManager
      *
      * @param bool $autoDefaultConnect
      */
-    public function __construct(bool $autoDefaultConnect = true)
+    protected function __construct()
     {
-        if ($autoDefaultConnect) {
-            $host = config('uhin.rabbit.host');
-            $port = config('uhin.rabbit.port');
-            $username = config('uhin.rabbit.username');
-            $password = config('uhin.rabbit.password');
-    
+        $host = config('uhin.rabbit.host');
+        $port = config('uhin.rabbit.port');
+        $username = config('uhin.rabbit.username');
+        $password = config('uhin.rabbit.password');
+
+        if (!is_null($host) && !is_null($port) && !is_null($username) && !is_null($password)) {
             $this->addConnection('default', $host, $port, $username, $password);
         }
+    }
+
+    protected function __clone()
+    {
+        // No cloning
+    }
+
+    public function __wakeup()
+    {
+        throw new Exception("Cannot unserialize singleton");
+    }
+
+    public static function getInstance() {
+        if (is_null(self::$instance)) {
+            self::$instance = new RabbitConnectionManager($autoDefaultConnect);
+        }
+        return self::$instance;
     }
 
     public function __destruct() {
