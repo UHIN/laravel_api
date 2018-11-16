@@ -125,7 +125,11 @@ class RabbitConnectionManager
         }
     }
 
-    public function getConnection(string $name) {
+    public function checkConnection(string $name = 'default') {
+        return array_key_exists($name, $connections);
+    }
+
+    public function getConnection(string $name = 'default') {
         if (!array_key_exists($name, $connections)) {
             return false;
         }
@@ -133,7 +137,7 @@ class RabbitConnectionManager
         return $connections[$name]->connection;
     }
 
-    public function getChannel(string $name) {
+    public function getChannel(string $name = 'default') {
         if (!array_key_exists($name, $connections)) {
             return false;
         }
