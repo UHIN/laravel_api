@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use RuntimeException;
 
 /**
  * Class RabbitReceiver
@@ -23,19 +24,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
  */
 class RabbitReceiver
 {
-
-    /** @var null|string */
-    private $host = null;
-
-    /** @var null|integer */
-    private $port = null;
-
-    /** @var null|string */
-    private $username = null;
-
-    /** @var null|string */
-    private $password = null;
-
     /** @var null|string */
     private $queue = null;
 
@@ -45,13 +33,18 @@ class RabbitReceiver
     /** @var integer */
     private $prefetchCount;
 
-    public function __construct(RabbitBuilder $builder = null)
+    /** @var null|string */
+    private $connectionName = null;
+
+    public function __construct(RabbitBuilder $builder = null, ?string $connectionName = 'default')
     {
 
         if(!is_null($builder))
         {
             $builder->execute();
         }
+
+        $this->connectionName = $connectionName;
 
         $this->setSettings($builder);
         $this->consumerTag = null;
@@ -60,46 +53,6 @@ class RabbitReceiver
 
     private function setSettings(?RabbitBuilder $builder)
     {
-        /* Set the host */
-        if(!is_null($builder) && method_exists($builder,'getHost') && !is_null($builder->getHost()))
-        {
-            $this->host = $builder->getHost();
-        }
-        else
-        {
-            $this->host = config('uhin.rabbit.host');
-        }
-
-        /* Set the port */
-        if(!is_null($builder) && method_exists($builder,'getPort') && !is_null($builder->getPort()))
-        {
-            $this->port = $builder->getPort();
-        }
-        else
-        {
-            $this->port = config('uhin.rabbit.port');
-        }
-
-        /* Set the username */
-        if(!is_null($builder) && method_exists($builder,'getUsername') && !is_null($builder->getUsername()))
-        {
-            $this->username = $builder->getUsername();
-        }
-        else
-        {
-            $this->username = config('uhin.rabbit.username');
-        }
-
-        /* Set the password */
-        if(!is_null($builder) && method_exists($builder,'getPassword') && !is_null($builder->getPassword()))
-        {
-            $this->password = $builder->getPassword();
-        }
-        else
-        {
-            $this->password = config('uhin.rabbit.password');
-        }
-
         /* Set the Exchange */
         if(!is_null($builder) && method_exists($builder,'getExchange') && !is_null($builder->getExchange()))
         {
@@ -129,54 +82,6 @@ class RabbitReceiver
         {
             $this->queue = config('uhin.rabbit.queue');
         }
-    }
-
-    /**
-     * Override the default host.
-     *
-     * @param null|string $host
-     * @return $this
-     */
-    public function setHost(?string $host)
-    {
-        $this->host = $host;
-        return $this;
-    }
-
-    /**
-     * Override the default port.
-     *
-     * @param null|integer $port
-     * @return $this
-     */
-    public function setPort(?integer $port)
-    {
-        $this->port = $port;
-        return $this;
-    }
-
-    /**
-     * Override the default username.
-     *
-     * @param null|string $username
-     * @return $this
-     */
-    public function setUsername(?string $username)
-    {
-        $this->username = $username;
-        return $this;
-    }
-
-    /**
-     * Override the default password.
-     *
-     * @param null|string $password
-     * @return $this
-     */
-    public function setPassword(?string $password)
-    {
-        $this->password = $password;
-        return $this;
     }
 
     /**
@@ -216,59 +121,15 @@ class RabbitReceiver
     }
 
     /**
-     * Opens a connection to Rabbit and initializes the queues. If the exchange/queues don't exist, then
-     * the exchange will be created, as well as a default queue and a dead letter exchange queue that are
-     * automatically bound to the exchange.
+     * Override the default connection name.
      *
-     * @param AMQPStreamConnection $connection
-     * @param AMQPChannel $channel
-     * @return boolean
+     * @param null|string $connectionName
+     * @return $this
      */
-    private function openConnection(&$connection, &$channel)
+    public function setConnectionName(?string $connectionName)
     {
-        // host
-        $host = $this->host;
-        if ($host === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_HOST in the .env file or call ->setHost(...)");
-        }
-
-        // port
-        $port = $this->port;
-        if ($port === null) {
-            throw new InvalidArgumentException("RabbitMQ port is undefined. Either set the RABBITMQ_PORT in the .env file or call ->setPort(...)");
-        }
-
-        // username
-        $username = $this->username;
-        if ($username === null) {
-            throw new InvalidArgumentException("RabbitMQ username is undefined. Either set the RABBITMQ_USERNAME in the .env file or call ->setUsername(...)");
-        }
-
-        // password
-        $password = $this->password;
-        if ($password === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_PASSWORD in the .env file or call ->setPassword(...)");
-        }
-
-        // Create the connection to Rabbit
-        $connection = new AMQPStreamConnection($host, $port, $username, $password);
-        $channel = $connection->channel();
-
-        return true;
-    }
-
-    /**
-     * Closes the connection that was previously opened.
-     *
-     * @param AMQPStreamConnection $connection
-     * @param AMQPChannel $channel
-     * @return bool
-     */
-    private function closeConnection(&$connection, &$channel)
-    {
-        $channel->close();
-        $connection->close();
-        return true;
+        $this->connectionName = $connectionName;
+        return $this;
     }
 
     /**
@@ -293,13 +154,18 @@ class RabbitReceiver
             $consumerTag = gethostname();
         }
 
-        // Open the connection
-        /** @var AMQPStreamConnection $connection */
-        $connection = null;
-        /** @var AMQPChannel $channel */
-        $channel = null;
+        // if the connectionName is set, attempt to use it
+        if (is_null($this->connectionName)) {
+            throw new RuntimeException("Rabbit default connection name not set.");
+        }
 
-        $this->openConnection($connection, $channel);
+        $rcm = RabbitConnectionManager::getInstance();
+
+        if (!$rcm->checkConnection($this->connectionName)) {
+            throw new RuntimeException("Rabbit connection not set");
+        }
+
+        $channel = $rcm->getChannel($this->connectionName);
 
         $this->setupGracefulStop($channel, $consumerTag);
 
@@ -352,9 +218,6 @@ class RabbitReceiver
             /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
             throw $e;
-        } finally {
-            // Close the connection
-            $this->closeConnection($connection, $channel);
         }
     }
 

@@ -34,6 +34,7 @@ class RabbitConnectionManager
         $port = config('uhin.rabbit.port');
         $username = config('uhin.rabbit.username');
         $password = config('uhin.rabbit.password');
+        $this->connections = [];
 
         if (!is_null($host) && !is_null($port) && !is_null($username) && !is_null($password)) {
             $this->addConnection('default', $host, $port, $username, $password);
@@ -53,7 +54,7 @@ class RabbitConnectionManager
      */
     public function __wakeup()
     {
-        throw new Exception("Cannot unserialize singleton");
+        throw new Exception("Deserialization of a singleton is not allowed.");
     }
 
     /**

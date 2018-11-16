@@ -15,25 +15,6 @@ use PhpAmqpLib\Wire\AMQPTable;
  */
 class RabbitBuilder
 {
-
-    /** @var null|string */
-    protected $host = null;
-
-    /** @var null|integer */
-    protected $port = null;
-
-    /** @var null|string */
-    protected $username = null;
-
-    /** @var null|string */
-    protected $password = null;
-
-    /** @var null|AMQPStreamConnection */
-    protected $connection = null;
-
-    /** @var null|AMQPChannel */
-    protected $channel = null;
-
     /** @var null|string */
     protected $exchange = null;
 
@@ -41,94 +22,17 @@ class RabbitBuilder
     protected $routingKey = null;
 
     /** @var null|string */
+    private $connectionName = null;
+
+    /** @var null|string */
     protected $queue = null;
 
-    public function __construct()
+    public function __construct(?string $connectionName = 'default')
     {
-        $this->host = config('uhin.rabbit.host');
-        $this->port = config('uhin.rabbit.port');
-        $this->username = config('uhin.rabbit.username');
-        $this->password = config('uhin.rabbit.password');
         $this->exchange = config('uhin.rabbit.exchange');
         $this->queue = config('uhin.rabbit.queue');
         $this->routingKey = config('uhin.rabbit.routing_key');
-    }
-
-    /**
-     * Override the default host.
-     *
-     * @param null|string $host
-     * @return $this
-     */
-    public function setHost(?string $host)
-    {
-        $this->host = $host;
-        return $this;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getHost()
-    {
-        return $this->host;
-    }
-
-    /**
-     * Override the default port.
-     *
-     * @param null|integer $port
-     * @return $this
-     */
-    public function setPort(?integer $port)
-    {
-        $this->port = $port;
-        return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getPort()
-    {
-        return $this->port;
-    }
-
-    /**
-     * Override the default username.
-     *
-     * @param null|string $username
-     * @return $this
-     */
-    public function setUsername(?string $username)
-    {
-        $this->username = $username;
-        return $this;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    /**
-     * Override the default password.
-     *
-     * @param null|string $password
-     * @return $this
-     */
-    public function setPassword(?string $password)
-    {
-        $this->password = $password;
-        return $this;
-    }
-
-    public function getPassword()
-    {
-        return $this->password;
+        $this->connectionName = $connectionName;
     }
 
     /**
@@ -180,62 +84,15 @@ class RabbitBuilder
     }
 
     /**
-     * Opens a connection to Rabbit and initializes the queues. If the exchange/queues don't exist, then
-     * the exchange will be created, as well as a default queue and a dead letter exchange queue that are
-     * automatically bound to the exchange.
+     * Override the default connection name.
      *
-     * @return boolean
+     * @param null|string $connectionName
+     * @return $this
      */
-    private function openConnection()
+    public function setConnectionName(?string $connectionName)
     {
-        // host
-        $host = $this->host;
-        if ($host === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_HOST in the .env file or call ->setHost(...)");
-        }
-
-        // port
-        $port = $this->port;
-        if ($port === null) {
-            throw new InvalidArgumentException("RabbitMQ port is undefined. Either set the RABBITMQ_PORT in the .env file or call ->setPort(...)");
-        }
-
-        // username
-        $username = $this->username;
-        if ($username === null) {
-            throw new InvalidArgumentException("RabbitMQ username is undefined. Either set the RABBITMQ_USERNAME in the .env file or call ->setUsername(...)");
-        }
-
-        // password
-        $password = $this->password;
-        if ($password === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_PASSWORD in the .env file or call ->setPassword(...)");
-        }
-
-        // Create the connection to Rabbit
-        $this->connection = new AMQPStreamConnection($host, $port, $username, $password);
-        $this->channel = $this->connection->channel();
-
-        return true;
-    }
-
-    /**
-     * Closes the connection that was previously opened.
-     *
-     * @return bool
-     */
-    public function closeConnection()
-    {
-        try {
-            $this->channel->close();
-            $this->connection->close();
-            return true;
-        } catch (Exception $e) {
-            return false;
-        } finally {
-            $this->channel = null;
-            $this->connection = null;
-        }
+        $this->connectionName = $connectionName;
+        return $this;
     }
 
     /**
@@ -278,8 +135,14 @@ class RabbitBuilder
         $internal = array_key_exists('internal', $options) ? (bool)$options['internal'] : false;
         $nowait = array_key_exists('nowait', $options) ? (bool)$options['nowait'] : false;
 
+        $rcm = RabbitConnectionManager::getInstance();
+        if (!$rcm->checkConnection($this->connectionName)) {
+            throw new RuntimeException("Rabbit connection not set");
+        }
+        $channel = $rcm->getChannel($this->connectionName);
+
         // Create the exchange
-        $this->channel->exchange_declare($exchangeName, $type, $passive, $durable, $auto_delete, $internal, $nowait);
+        $channel->exchange_declare($exchangeName, $type, $passive, $durable, $auto_delete, $internal, $nowait);
     }
 
     /**
@@ -321,8 +184,14 @@ class RabbitBuilder
             'x-max-priority',
         ]);
 
+        $rcm = RabbitConnectionManager::getInstance();
+        if (!$rcm->checkConnection($this->connectionName)) {
+            throw new RuntimeException("Rabbit connection not set");
+        }
+        $channel = $rcm->getChannel($this->connectionName);
+
         // Create the queue
-        return $this->channel->queue_declare($queueName, $passive, $durable, $exclusive, $auto_delete, $nowait, $arguments);
+        return $channel->queue_declare($queueName, $passive, $durable, $exclusive, $auto_delete, $nowait, $arguments);
     }
 
     /**
@@ -339,30 +208,23 @@ class RabbitBuilder
         // Determine the options for this binding
         $nowait = array_key_exists('nowait', $options) ? (bool)$options['nowait'] : false;
 
-        // Bind the dead letter queue to the exchange
-        $this->channel->queue_bind($queueName, $exchangeName, $routingKey, $nowait);
-    }
-
-    /**
-     * This will initiate a connection to the RabbitMQ server, run the `build()` function
-     * to build all rabbit exchanges, queues, and bindings, and then it will close the
-     * connection.
-     */
-    public function execute()
-    {
-        // Don't run the Builder until the developer has set a username and password
-        if (empty($this->username) && empty($this->password)) {
-            return;
+        $rcm = RabbitConnectionManager::getInstance();
+        if (!$rcm->checkConnection($this->connectionName)) {
+            throw new RuntimeException("Rabbit connection not set");
         }
-        $this->openConnection();
-        $this->build();
-        $this->closeConnection();
+        $channel = $rcm->getChannel($this->connectionName);
+
+        // Bind the dead letter queue to the exchange
+        $channel->queue_bind($queueName, $exchangeName, $routingKey, $nowait);
     }
 
     /**
      * This function should build all of your RabbitMQ exchanges, queues, and bindings.
+     *
+     * It will to the RabbitMQ server, run the `build()` function to build all rabbit
+     * exchanges, queues, and bindings.
      */
-    protected function build()
+    public function execute()
     {
         // Grab some files from the config settings
         $exchange = $this->exchange;
@@ -387,5 +249,4 @@ class RabbitBuilder
         $this->bind($dlxQueue, $exchange, $dlxRoutingKey);
         $this->bind($queue, $exchange, $routingKey);
     }
-
 }
