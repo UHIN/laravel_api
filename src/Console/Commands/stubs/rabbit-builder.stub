@@ -20,23 +20,6 @@ class DummyClass extends BaseRabbitBuilder
 
     protected function build()
     {
-        // Determine the DLX queue info
-        $dlxQueue = $this->queue . '.dlx';
-        $dlxRoutingKey = 'dlx';
-
-        // Build the Exchange
-        $this->createExchange($this->exchange);
-
-        // Build the Queues
-        $this->createQueue($dlxQueue);
-        $this->createQueue($this->queue, [
-            'x-dead-letter-exchange' => $this->exchange,
-            'x-dead-letter-routing-key' => $dlxRoutingKey,
-        ]);
-
-        // Bind the Queues to the Exchange
-        $this->bind($dlxQueue, $this->exchange, $dlxRoutingKey);
-        $this->bind($this->queue, $this->exchange, $this->routingKey);
+        parent::build();
     }
-
 }

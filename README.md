@@ -30,7 +30,7 @@ Second add this block of code to your composer.json (editing the path):
 
 The constructor stubs out the configuration for the builder, modify the constructor to suit your needs. In previous versions of the builder the changes were made i nthe builder method. This is not longer required but if needs be the builder can still be overridden.
 
-```    
+```php  
 public function __construct()
 {
    $this->host = config('uhin.rabbit.host');

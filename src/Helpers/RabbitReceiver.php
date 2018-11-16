@@ -314,10 +314,21 @@ class RabbitReceiver
             });
 
             // Don't exit until the callbacks have been released (basically... never exit)
-            while (count($channel->callbacks)) {
-                try {
+            while (count($channel->callbacks))
+            {
+                /* Check for worker drain */
+                if($this->isDownForMaintenance())
+                {
+                    //Message needs to be reprocessed place back in queue.
+                    $channel->basic_cancel($consumerTag, false, true);
+                    die("Worker is draining.\r\n");
+                }
+                try
+                {
                     $channel->wait();
-                } catch(Exception $e) {
+                }
+                catch(Exception $e)
+                {
                     /** @noinspection PhpUndefinedMethodInspection */
                     Log::debug("Error while reading queue . {$this->host}:{$this->port} {$this->queue}: " . $e->getMessage());
                     die();

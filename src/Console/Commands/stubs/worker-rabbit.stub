@@ -20,14 +20,6 @@ class DummyClass extends BaseRabbitWorker
            $channel = $message->delivery_info['channel'];
            $deliveryTag = $message->delivery_info['delivery_tag'];
 
-           /* Check for worker drain */
-           if($this->isDownForMaintenance())
-           {
-                //Message needs to be reprocessed place back in queue.
-                $channel->basic_nack($deliveryTag, false, true);
-                die("Worker is draining.\r\n");
-           }
-
            try{
                //Add worker logic here
                echo $message->body;
