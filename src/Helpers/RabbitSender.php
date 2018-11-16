@@ -154,6 +154,9 @@ class RabbitSender
 
     /**
      * Override the default connection name.
+     *
+     * @param null|string $defaultConnectionName
+     * @return RabbitSender
      */
     public function setDefaultConnectionName(?string $defaultConnectionName)
     {
@@ -253,11 +256,15 @@ class RabbitSender
 
         // if the defaultConnectionName is set, attempt to use it
         if (!is_null($this->defaultConnectionName)) {
+
             $rcm = RabbitConnectionManager::getInstance();
+
             if ($rcm->checkConnection($this->defaultConnectionName)) {
+
                 if (is_null($connection)) {
                     $connection = $rcm->getConnection($this->defaultConnectionName);
                 }
+
                 if (is_null($channel)) {
                     $channel = $rcm->getChannel($this->defaultConnectionName);
                 }

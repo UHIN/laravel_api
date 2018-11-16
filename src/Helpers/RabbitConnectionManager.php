@@ -12,17 +12,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 /**
  * Class RabbitConnectionManager
  *
- * Example for reading from a queue:
- *
- *   (new RabbitConnectionManager)->send([
- *       'type' => 'file',
- *       'id' => 'V1-FILE-ARCHIVE-GUID-123123-12312312',
- *       'source' => 'sftp',
- *       'filename' => 'test-file.x12',
- *       'data' => 'base64fileherewithnobase64inthebeginning',
- *       'datetime' => 'ATOM UTC'
- *   ]);
- *
  * @package uhin\laravel_api
  */
 class RabbitConnectionManager
@@ -31,16 +20,13 @@ class RabbitConnectionManager
     /** @var null|object */
     private $connections = [];
 
-    //create the private instance variable
-    private static $instance=null;
+    private static $instance = null;
 
     /**
      * RabbitConnectionManager constructor.
      *
      * If $autoDefaultConnect is set to true, then the default rabbit connection will be set
      * automatically.
-     *
-     * @param bool $autoDefaultConnect
      */
     protected function __construct()
     {
@@ -54,32 +40,49 @@ class RabbitConnectionManager
         }
     }
 
+    /**
+     *
+     */
     protected function __clone()
     {
         // No cloning
     }
 
+    /**
+     * @throws Exception
+     */
     public function __wakeup()
     {
         throw new Exception("Cannot unserialize singleton");
     }
 
+    /**
+     * @return null|RabbitConnectionManager
+     */
     public static function getInstance() {
         if (is_null(self::$instance)) {
-            self::$instance = new RabbitConnectionManager($autoDefaultConnect);
+            self::$instance = new RabbitConnectionManager();
         }
         return self::$instance;
     }
 
+    /**
+     *
+     */
     public function __destruct() {
-        //
-        foreach ($connections as $connectionName => $connection) {
+        foreach ($this->connections as $connectionName => $connection) {
             $this->removeConnection($connectionName);
         }
     }
 
     /**
      * Adds a new connection.
+     * @param string $name
+     * @param string $host
+     * @param string $port
+     * @param string $username
+     * @param string $password
+     * @return bool
      */
     public function addConnection(string $name, string $host, string $port, string $username, string $password) {
         // host
@@ -102,7 +105,7 @@ class RabbitConnectionManager
             throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_PASSWORD in the .env file or call ->setPassword(...)");
         }
 
-        if (array_key_exists($name, $connections)) {
+        if (array_key_exists($name, $this->connections)) {
             return false;
         }        
 
@@ -125,28 +128,44 @@ class RabbitConnectionManager
         }
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
     public function checkConnection(string $name = 'default') {
-        return array_key_exists($name, $connections);
+        return array_key_exists($name, $this->connections);
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
     public function getConnection(string $name = 'default') {
-        if (!array_key_exists($name, $connections)) {
+        if (!array_key_exists($name, $this->onnections)) {
             return false;
         }
 
-        return $connections[$name]->connection;
+        return $this->connections[$name]->connection;
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
     public function getChannel(string $name = 'default') {
-        if (!array_key_exists($name, $connections)) {
+        if (!array_key_exists($name, $this->connections)) {
             return false;
         }
 
-        return $connections[$name]->channel;
+        return $this->connections[$name]->channel;
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
     public function removeConnection(string $name) {
-        if (!array_key_exists($name, $connections)) {
+        if (!array_key_exists($name, $this->connections)) {
             return false;
         }
 
@@ -160,10 +179,18 @@ class RabbitConnectionManager
             return false;
         }
 
-        unset($connections[$name]);
+        unset($this->connections[$name]);
         return true;
     }
 
+    /**
+     * @param string $name
+     * @param string $host
+     * @param string $port
+     * @param string $username
+     * @param string $password
+     * @return bool
+     */
     public function updateConnection(string $name, string $host, string $port, string $username, string $password) {
         if (!$this->removeConnection($name)) {
             return false;
