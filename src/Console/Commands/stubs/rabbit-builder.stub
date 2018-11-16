@@ -7,9 +7,36 @@ use uhin\laravel_api\RabbitBuilder as BaseRabbitBuilder;
 class DummyClass extends BaseRabbitBuilder
 {
 
+    public function __construct()
+    {
+        $this->host = config('uhin.rabbit.host');
+        $this->port = config('uhin.rabbit.port');
+        $this->username = config('uhin.rabbit.username');
+        $this->password = config('uhin.rabbit.password');
+        $this->exchange = config('uhin.rabbit.exchange');
+        $this->queue = config('uhin.rabbit.queue');
+        $this->routingKey = config('uhin.rabbit.routing_key');
+    }
+
     protected function build()
     {
-        parent::build();
+        // Determine the DLX queue info
+        $dlxQueue = $this->queue . '.dlx';
+        $dlxRoutingKey = 'dlx';
+
+        // Build the Exchange
+        $this->createExchange($this->exchange);
+
+        // Build the Queues
+        $this->createQueue($dlxQueue);
+        $this->createQueue($this->queue, [
+            'x-dead-letter-exchange' => $this->exchange,
+            'x-dead-letter-routing-key' => $dlxRoutingKey,
+        ]);
+
+        // Bind the Queues to the Exchange
+        $this->bind($dlxQueue, $this->exchange, $dlxRoutingKey);
+        $this->bind($this->queue, $this->exchange, $this->routingKey);
     }
 
 }
