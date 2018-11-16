@@ -46,6 +46,9 @@ class RabbitSender
     /** @var null|string */
     private $routingKey = null;
 
+    /** @var null|string */
+    private $defaultConnectionName = null;
+
     /**
      * RabbitSender constructor.
      *
@@ -58,8 +61,9 @@ class RabbitSender
      *
      * @param bool $autoBuild
      * @param null|RabbitBuilder $builder
+     * @param null|string $defaultConnectionName
      */
-    public function __construct(bool $autoBuild = true, ?RabbitBuilder $builder = null)
+    public function __construct(bool $autoBuild = true, ?RabbitBuilder $builder = null, ?string $defaultConnectionName = null)
     {
         if ($autoBuild) {
             if ($builder === null) {
@@ -73,6 +77,7 @@ class RabbitSender
         $this->password = config('uhin.rabbit.password');
         $this->exchange = config('uhin.rabbit.exchange');
         $this->routingKey = config('uhin.rabbit.routing_key');
+        $this->defaultConnectionName = $defaultConnectionName;
     }
 
     /**
@@ -144,6 +149,15 @@ class RabbitSender
     public function setRoutingKey(?string $routingKey)
     {
         $this->routingKey = $routingKey;
+        return $this;
+    }
+
+    /**
+     * Override the default connection name.
+     */
+    public function setDefaultConnectionName(?string $defaultConnectionName)
+    {
+        $this->defaultConnectionName = $defaultConnectionName;
         return $this;
     }
 
@@ -235,6 +249,19 @@ class RabbitSender
         // message
         if ($message === null) {
             throw new InvalidArgumentException("RabbitMQ message is null - you must provide a non-null message to send.");
+        }
+
+        // if the defaultConnectionName is set, attempt to use it
+        if (!is_null($this->defaultConnectionName)) {
+            $rcm = RabbitConnectionManager::getInstance();
+            if ($rcm->checkConnection($this->defaultConnectionName)) {
+                if (is_null($connection)) {
+                    $connection = $rcm->getConnection($this->defaultConnectionName);
+                }
+                if (is_null($channel)) {
+                    $channel = $rcm->getChannel($this->defaultConnectionName);
+                }
+            }
         }
 
         // Open the connection
