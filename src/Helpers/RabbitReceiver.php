@@ -266,13 +266,9 @@ class RabbitReceiver
      */
     private function closeConnection(&$connection, &$channel)
     {
-        try {
-            $channel->close();
-            $connection->close();
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
+        $channel->close();
+        $connection->close();
+        return true;
     }
 
     /**
@@ -281,6 +277,7 @@ class RabbitReceiver
      * @param callable $callback The function that will be called for each message in the queue - this
      * callback will take one argument: the Rabbit message
      * @return bool
+     * @throws Exception
      */
     public function receive(callable $callback)
     {
@@ -354,7 +351,7 @@ class RabbitReceiver
 
             /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
-            return false;
+            throw $e;
         } finally {
             // Close the connection
             $this->closeConnection($connection, $channel);

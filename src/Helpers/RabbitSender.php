@@ -292,13 +292,9 @@ class RabbitSender
      */
     public function closeConnection(?AMQPStreamConnection &$connection, ?AMQPChannel &$channel)
     {
-        try {
-            $channel->close();
-            $connection->close();
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
+        $channel->close();
+        $connection->close();
+        return true;
     }
 
     /**
@@ -383,7 +379,7 @@ class RabbitSender
 
             /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
-            return false;
+            throw $e;
         } finally {
             if ($openedConnection) {
                 // Close the connection
@@ -452,7 +448,7 @@ class RabbitSender
 
             /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
-            return false;
+            throw $e;
         } finally {
             if ($openedConnection) {
                 // Close the connection
