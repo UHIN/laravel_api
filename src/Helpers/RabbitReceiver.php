@@ -179,13 +179,6 @@ class RabbitReceiver
             // Don't exit until the callbacks have been released (basically... never exit)
             while (count($channel->callbacks))
             {
-                /* Check for worker drain */
-                if($this->isDownForMaintenance())
-                {
-                    //Message needs to be reprocessed place back in queue.
-                    $channel->basic_cancel($consumerTag, false, true);
-                    die("Worker is draining.\r\n");
-                }
                 try
                 {
                     $channel->wait();
@@ -193,23 +186,19 @@ class RabbitReceiver
                 catch(Exception $e)
                 {
                     /** @noinspection PhpUndefinedMethodInspection */
-                    Log::debug("Error while reading queue . {$this->host}:{$this->port} {$this->queue}: " . $e->getMessage());
+                    Log::debug("Error while reading queue {$this->queue}: " . $e->getMessage());
                     die();
                 }
             }
 
             /** @noinspection PhpUndefinedMethodInspection */
-            Log::debug("Queue finished reading. {$this->host}:{$this->port} {$this->queue}");
+            Log::debug("Queue finished reading. {$this->queue}");
             return true;
         } catch (Exception $e) {
             $message = "Error in " . __FILE__ . " line " . __LINE__ .
                 " - Failed to read queue. " .
                 $e->getMessage() .
                 json_encode([
-                    'host' => $this->host,
-                    'port' => $this->port,
-                    'username' => $this->username,
-                    'password' => $this->password,
                     'queue' => $this->queue,
                     'consumerTag' => $this->consumerTag,
                     'prefetchCount' => $this->prefetchCount,

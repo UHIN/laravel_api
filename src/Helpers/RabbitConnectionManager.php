@@ -3,11 +3,8 @@
 namespace uhin\laravel_api;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 
 /**
  * Class RabbitConnectionManager
@@ -146,7 +143,7 @@ class RabbitConnectionManager
             return false;
         }
 
-        return $this->connections[$name]->connection;
+        return $this->connections[$name]['connection'];
     }
 
     /**
@@ -158,7 +155,7 @@ class RabbitConnectionManager
             return false;
         }
 
-        return $this->connections[$name]->channel;
+        return $this->connections[$name]['channel'];
     }
 
     /**

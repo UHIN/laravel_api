@@ -219,12 +219,19 @@ class RabbitBuilder
     }
 
     /**
-     * This function should build all of your RabbitMQ exchanges, queues, and bindings.
-     *
-     * It will to the RabbitMQ server, run the `build()` function to build all rabbit
-     * exchanges, queues, and bindings.
+     * This will initiate a connection to the RabbitMQ server, run the `build()` function
+     * to build all rabbit exchanges, queues, and bindings, and then it will close the
+     * connection.
      */
     public function execute()
+    {
+        $this->build();
+    }
+
+    /**
+     * This function should build all of your RabbitMQ exchanges, queues, and bindings.
+     */
+    protected function build()
     {
         // Grab some files from the config settings
         $exchange = $this->exchange;

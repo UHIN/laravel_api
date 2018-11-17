@@ -197,7 +197,7 @@ class RabbitSender
             /** @noinspection PhpUndefinedMethodInspection */
             if (config('app.debug'))
             {
-                Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+                Log::debug("Message queued to Rabbit. {$this->exchange}:{$this->routingKey}");
             }
             return true;
         } catch (Exception $e) {
@@ -206,10 +206,6 @@ class RabbitSender
                 $e->getMessage() .
                 json_encode([
                     'message_length' => strlen($message),
-                    'host' => $this->host,
-                    'port' => $this->port,
-                    'username' => $this->username,
-                    'password' => $this->password,
                     'exchange' => $this->exchange,
                     'routingKey' => $this->routingKey,
                 ], JSON_PRETTY_PRINT);
@@ -273,7 +269,7 @@ class RabbitSender
             /** @noinspection PhpUndefinedMethodInspection */
             if (config('app.debug'))
             {
-                Log::debug("Message queued to Rabbit. {$this->host}:{$this->port} {$this->exchange}:{$this->routingKey}");
+                Log::debug("Message queued to Rabbit. {$this->exchange}:{$this->routingKey}");
             }
             return true;
         } catch (Exception $e) {
@@ -282,10 +278,6 @@ class RabbitSender
                 $e->getMessage() .
                 json_encode([
                     'message_length' => strlen($message),
-                    'host' => $this->host,
-                    'port' => $this->port,
-                    'username' => $this->username,
-                    'password' => $this->password,
                     'exchange' => $this->exchange,
                     'routingKey' => $this->routingKey,
                 ], JSON_PRETTY_PRINT);
