@@ -2,8 +2,7 @@
 
 namespace uhin\laravel_api;
 
-use Exception;
-use InvalidArgumentException;
+use RuntimeException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Wire\AMQPTable;
