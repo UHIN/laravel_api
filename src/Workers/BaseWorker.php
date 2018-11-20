@@ -110,7 +110,7 @@ abstract class BaseWorker
 
     public function isDownForMaintenance()
     {
-        return file_exists($this->storagePath().'/framework/drain');
+        return file_exists(storage_path('framework/drain'));
     }
 
 }
