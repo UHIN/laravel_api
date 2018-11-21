@@ -139,7 +139,7 @@ class RabbitConnectionManager
      * @return bool
      */
     public function getConnection(string $name = 'default') {
-        if (!array_key_exists($name, $this->onnections)) {
+        if (!array_key_exists($name, $this->connections)) {
             return false;
         }
 
