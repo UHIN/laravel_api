@@ -37,8 +37,6 @@ class RabbitSender
     /** @var null|string */
     private $connectionName = null;
 
-    private $queue = null;
-
     /**
      * RabbitSender constructor.
      *
@@ -97,16 +95,6 @@ class RabbitSender
         {
             $this->routingKey = config('uhin.rabbit.routing_key');
         }
-
-        /* Set the Queue */
-        if(!is_null($builder) && method_exists($builder,'getQueue') && !is_null($builder->getQueue()))
-        {
-            $this->queue = $builder->getQueue();
-        }
-        else
-        {
-            $this->queue = config('uhin.rabbit.queue');
-        }
     }
 
     /**
@@ -146,10 +134,11 @@ class RabbitSender
     }
 
     /**
-     * Sends a message to the Rabbit queue. If you want to re-use a connection to rabbit that
-     * you already have, you can pass in the connection and channel. Otherwise, a new
-     * connection/channel will be opened and closed on completion. If you do provide an open
-     * connection/channel, they will not be closed on completion by this method
+     * Sends a message to the Rabbit exchange and routed to the specified routingKey. If you
+     * want to re-use a connection to rabbit that you already have, you can pass in the
+     * connection and channel. Otherwise, a new connection/channel will be opened and closed
+     * on completion. If you do provide an open connection/channel, they will not be closed
+     * on completion by this method
      *
      * @param string $message
      * @return bool
