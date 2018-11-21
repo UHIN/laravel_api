@@ -171,8 +171,12 @@ class RabbitConnectionManager
         $closingConnection = $this->getConnection($name);
         
         try {
-            $closingChannel->close();
-            $closingConnection->close();
+            if ($closingChannel) {
+                $closingChannel->close();
+            }
+            if ($closingConnection) {
+                $closingConnection->close();
+            }
         } catch (Exception $e) {
             return false;
         }
