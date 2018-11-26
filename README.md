@@ -33,18 +33,18 @@ Review these documents when upgrading versions.
 
 ```php artisan uhin:make:rabbit-builder```
 
-The constructor stubs out the configuration for the builder, modify the constructor to suit your needs. In previous versions of the builder the changes were made i nthe builder method. This is not longer required but if needs be the builder can still be overridden.
+The constructor stubs out the configuration for the builder. Modify the constructor to suit your needs. In previous versions of the builder the changes were made in the builder method. This is no longer required but, if needs be, the builder can still be overridden.
 
 ```php  
 public function __construct()
 {
-   $this->host = config('uhin.rabbit.host');
-   $this->port = config('uhin.rabbit.port');
-   $this->username = config('uhin.rabbit.username');
-   $this->password = config('uhin.rabbit.password');
-   $this->exchange = config('uhin.rabbit.exchange');
-   $this->queue = config('uhin.rabbit.queue');
-   $this->routingKey = config('uhin.rabbit.routing_key');
+        parent::__construct();
+
+        // You can overwrite these parent values
+        // $this->exchange = config('uhin.rabbit.exchange');
+        // $this->queue = config('uhin.rabbit.queue');
+        // $this->routingKey = config('uhin.rabbit.routing_key');
+        // $this->connectionName = 'default';
 }
 ```
 
