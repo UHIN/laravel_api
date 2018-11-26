@@ -34,7 +34,7 @@ class RabbitReceiver
     private $prefetchCount;
 
     /** @var null|string */
-    private $connectionName = null;
+    private $connectionName = 'default';
 
     public function __construct(RabbitBuilder $builder = null, ?string $connectionName = 'default')
     {

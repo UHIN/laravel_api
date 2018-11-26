@@ -21,7 +21,7 @@ class RabbitBuilder
     protected $routingKey = null;
 
     /** @var null|string */
-    private $connectionName = null;
+    private $connectionName = 'default';
 
     /** @var null|string */
     protected $queue = null;

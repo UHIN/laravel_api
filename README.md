@@ -21,6 +21,11 @@ Second add this block of code to your composer.json (editing the path):
         }
     ]
 
+# Upgrade guides
+
+Review these documents when upgrading versions.
+
+[V1 to V2 Upgrade Guide](./docs/v2-upgrade-notes.md)
 
 # Using Rabbit
 

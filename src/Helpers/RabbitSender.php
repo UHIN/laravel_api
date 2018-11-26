@@ -35,7 +35,7 @@ class RabbitSender
     private $routingKey = null;
 
     /** @var null|string */
-    private $connectionName = null;
+    private $connectionName = 'default';
 
     /**
      * RabbitSender constructor.
