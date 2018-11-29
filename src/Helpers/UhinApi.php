@@ -84,34 +84,38 @@ class UhinApi
 
                     // If no filter override was provided, then proceed
                     if (!$overridden) {
-                        switch ($operator) {
-                            case 'in':
-                                $query->whereIn($column, explode(',', $value));
-                                break;
-                            case 'not':
-                                $query->whereNotIn($column, explode(',', $value));
-                                break;
-                            case 'prefix':
-                                $query->where($column, 'like', "$value%");
-                                break;
-                            case 'postfix':
-                                $query->where($column, 'like', "%$value");
-                                break;
-                            case 'infix':
-                                $query->where($column, 'like', "%$value%");
-                                break;
-                            case 'before':
-                                $query->where($column, '<=', self::formatDateSearch($value));
-                                break;
-                            case 'after':
-                                $query->where($column, '>=', self::formatDateSearch($value));
-                                break;
-                            case 'null':
-                                $query->whereNull($column);
-                                break;
-                            case 'notnull':
-                                $query->whereNotNull($column);
-                                break;
+                        if ($column === 'fulltext_search') {
+                            $query->fullTextSearch($value);
+                        } else {
+                            switch ($operator) {
+                                case 'in':
+                                    $query->whereIn($column, explode(',', $value));
+                                    break;
+                                case 'not':
+                                    $query->whereNotIn($column, explode(',', $value));
+                                    break;
+                                case 'prefix':
+                                    $query->where($column, 'like', "$value%");
+                                    break;
+                                case 'postfix':
+                                    $query->where($column, 'like', "%$value");
+                                    break;
+                                case 'infix':
+                                    $query->where($column, 'like', "%$value%");
+                                    break;
+                                case 'before':
+                                    $query->where($column, '<=', self::formatDateSearch($value));
+                                    break;
+                                case 'after':
+                                    $query->where($column, '>=', self::formatDateSearch($value));
+                                    break;
+                                case 'null':
+                                    $query->whereNull($column);
+                                    break;
+                                case 'notnull':
+                                    $query->whereNotNull($column);
+                                    break;
+                            }
                         }
                     }
                 }

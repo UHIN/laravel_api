@@ -10,7 +10,7 @@ For development:
 
 In a service using this library you will make two changes to the composer.json to do development.
 
-First change the version of the require for this library to dev-master
+First change the version of the require for this library to either: "dev-master", "1.x-dev", or "2.x-dev" - depending on which branch you are working on.
 
 Second add this block of code to your composer.json (editing the path):
 
