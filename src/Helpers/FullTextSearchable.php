@@ -23,7 +23,7 @@ trait FullTextSearchable
     {
         // removing symbols used by MySQL
         $reservedSymbols = ['-', '+', '<', '>', '@', '(', ')', '~'];
-        $term = str_replace($reservedSymbols, '', $term);
+        $term = str_replace($reservedSymbols, ' ', $term);
 
         $words = explode(' ', $term);
 
