@@ -114,9 +114,11 @@ class RabbitReceiver
      * @param integer $prefetchCount
      * @return $this
      */
-    public function setPrefetchCount(integer $prefetchCount)
+    public function setPrefetchCount(int $prefetchCount)
     {
-        $this->prefetchCount = $prefetchCount;
+        if($prefetchCount > 0) {
+            $this->prefetchCount = $prefetchCount;
+        }
         return $this;
     }
 
