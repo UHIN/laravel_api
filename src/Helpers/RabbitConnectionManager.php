@@ -31,10 +31,19 @@ class RabbitConnectionManager
         $port = config('uhin.rabbit.port');
         $username = config('uhin.rabbit.username');
         $password = config('uhin.rabbit.password');
-        $this->connections = [];
+        $vhost = config('uhin.rabbit.vhost', '/');
+        $insist = config('uhin.rabbit.insist', false);
+        $login_method = config('uhin.rabbit.login_method', 'AMQPLAIN');
+        $login_response = config('uhin.rabbit.login_response', null);
+        $locale = config('uhin.rabbit.locale', 'en_US');
+        $connection_timeout = config('uhin.rabbit.connection_timeout', 3.0);
+        $read_write_timeout = config('uhin.rabbit.read_write_timeout', 3.0);
+        $context = config('uhin.rabbit.context', null);
+        $keepalive = config('uhin.rabbit.keepalive', false);
+        $heartbeat = config('uhin.rabbit.heartbeat', 0);
 
         if (!is_null($host) && !is_null($port) && !is_null($username) && !is_null($password)) {
-            $this->addConnection('default', $host, $port, $username, $password);
+            $this->addConnection('default', $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
         }
     }
 
@@ -80,9 +89,35 @@ class RabbitConnectionManager
      * @param string $port
      * @param string $username
      * @param string $password
+     * @param string $vhost
+     * @param bool $insist
+     * @param string $login_method
+     * @param null $login_response
+     * @param string $locale
+     * @param float $connection_timeout
+     * @param float $read_write_timeout
+     * @param null $context
+     * @param bool $keepalive
+     * @param int $heartbeat
      * @return bool
      */
-    public function addConnection(string $name, string $host, string $port, string $username, string $password) {
+    public function addConnection(
+        string $name,
+        string $host,
+        string $port,
+        string $username,
+        string $password,
+        string $vhost = '/',
+        bool $insist = false,
+        string $login_method = 'AMQPLAIN',
+        ?$login_response = null,
+        string $locale = 'en_US',
+        float $connection_timeout = 3.0,
+        float $read_write_timeout = 3.0,
+        ?$context = null,
+        bool $keepalive = false,
+        int $heartbeat = 0
+    ) {
         // host
         if ($host === null) {
             throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_HOST in the .env file or call ->setHost(...)");
@@ -108,7 +143,7 @@ class RabbitConnectionManager
         }        
 
         try {
-            $connection = new AMQPStreamConnection($host, $port, $username, $password);
+            $connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
 
             if (is_null($connection)) {
                 return false;
@@ -186,18 +221,42 @@ class RabbitConnectionManager
     }
 
     /**
-     * @param string $name
      * @param string $host
      * @param string $port
      * @param string $username
      * @param string $password
-     * @return bool
+     * @param string $vhost
+     * @param bool $insist
+     * @param string $login_method
+     * @param null $login_response
+     * @param string $locale
+     * @param float $connection_timeout
+     * @param float $read_write_timeout
+     * @param null $context
+     * @param bool $keepalive
+     * @param int $heartbeat
      */
-    public function updateConnection(string $name, string $host, string $port, string $username, string $password) {
+    public function updateConnection(
+        string $name,
+        string $host,
+        string $port,
+        string $username,
+        string $password,
+        string $vhost = '/',
+        bool $insist = false,
+        string $login_method = 'AMQPLAIN',
+        ?$login_response = null,
+        string $locale = 'en_US',
+        float $connection_timeout = 3.0,
+        float $read_write_timeout = 3.0,
+        ?$context = null,
+        bool $keepalive = false,
+        int $heartbeat = 0
+    ) {
         if (!$this->removeConnection($name)) {
             return false;
         }
 
-        return $this->addConnection($name, $host, $port, $username, $password);
+        return $this->addConnection($name, $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
     }
 }
