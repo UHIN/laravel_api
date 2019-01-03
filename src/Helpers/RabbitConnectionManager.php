@@ -110,11 +110,11 @@ class RabbitConnectionManager
         string $vhost = '/',
         bool $insist = false,
         string $login_method = 'AMQPLAIN',
-        ?$login_response = null,
+        $login_response = null,
         string $locale = 'en_US',
         float $connection_timeout = 3.0,
         float $read_write_timeout = 3.0,
-        ?$context = null,
+        $context = null,
         bool $keepalive = false,
         int $heartbeat = 0
     ) {
@@ -245,11 +245,11 @@ class RabbitConnectionManager
         string $vhost = '/',
         bool $insist = false,
         string $login_method = 'AMQPLAIN',
-        ?$login_response = null,
+        $login_response = null,
         string $locale = 'en_US',
         float $connection_timeout = 3.0,
         float $read_write_timeout = 3.0,
-        ?$context = null,
+        $context = null,
         bool $keepalive = false,
         int $heartbeat = 0
     ) {
