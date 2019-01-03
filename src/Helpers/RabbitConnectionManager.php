@@ -42,6 +42,7 @@ class RabbitConnectionManager
         $keepalive = config('uhin.rabbit.keepalive', false);
         $heartbeat = config('uhin.rabbit.heartbeat', 0);
 
+        $this->connections = [];
         if (!is_null($host) && !is_null($port) && !is_null($username) && !is_null($password)) {
             $this->addConnection('default', $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
         }
