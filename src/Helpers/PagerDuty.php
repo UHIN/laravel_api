@@ -55,7 +55,7 @@ class PagerDuty
         $this->client = config('uhin.pager_duty.client');
         $this->severity = config('uhin.pager_duty.severity');
         $this->action = config('uhin.pager_duty.action');
-        $this->enableServerDetails = config('uhin.pager_duty.enableserverdetails');
+        $this->enableServerDetails = config('uhin.pager_duty.enableserverdetails', true);
     }
 
     /**
@@ -253,9 +253,11 @@ class PagerDuty
 
 
         // Build some other information
+        $backtracefiller = [];
         if ($enableServerDetails === true) {
             $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
             $details['backtrace'] = $backtrace;
+            $backtracefiller = $backtrace[1]['function'];
         }
         $client_url = $this->buildClientUrl();
 
@@ -268,7 +270,7 @@ class PagerDuty
                 'severity'          => $severity,
                 'component'         => $component,
                 'group'             => $client,
-                'classs'            => $backtrace[1]['function'],
+                'classs'            => $backtracefiller,
                 'custom_details'    => $details,
             ],
             'routing_key'   => $integrationKey,
