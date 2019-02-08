@@ -261,6 +261,7 @@ class PagerDuty
         }
         $client_url = $this->buildClientUrl();
 
+
         // Create the payload
         $args = [
             'payload' => [
