@@ -45,6 +45,8 @@ class PagerDuty
     /** @var null|string */
     private $action = null;
 
+    /** @var null|string */
+    private $enableServerDetails = null;
 
     public function __construct() {
         $this->apiUrl = config('uhin.pager_duty.url');
@@ -53,6 +55,7 @@ class PagerDuty
         $this->client = config('uhin.pager_duty.client');
         $this->severity = config('uhin.pager_duty.severity');
         $this->action = config('uhin.pager_duty.action');
+        $this->enableServerDetails = config('uhin.pager_duty.enableserverdetails');
     }
 
     /**
@@ -133,13 +136,25 @@ class PagerDuty
     }
 
     /**
-     * Override the default severity.
+     * Override the default action.
      *
      * @param null|string $action
      * @return $this
      */
     public function setAction(?string $action) {
         $this->action = $action;
+        return $this;
+    }
+
+
+    /**
+     * Override the default enableserverdetails.
+     *
+     * @param null|string $action
+     * @return $this
+     */
+    public function setServerDetail(?string $enableServerDetails) {
+        $this->enableServerDetails = $enableServerDetails;
         return $this;
     }
 
@@ -224,14 +239,24 @@ class PagerDuty
         }
 
         // Gather all of the server variables
+        $enableServerDetails = $this->enableServerDetails;
+        if ($enableServerDetails === null) {
+            $enableServerDetails = true;
+        }
         $details = [];
-        foreach ($_SERVER as $key => $value) {
-            $details[$key] = $value;
+        if ($enableServerDetails === true) {
+            foreach ($_SERVER as $key => $value) {
+                $details[$key] = $value;
+            }
+
         }
 
+
         // Build some other information
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        $details['backtrace'] = $backtrace;
+        if ($enableServerDetails === true) {
+            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+            $details['backtrace'] = $backtrace;
+        }
         $client_url = $this->buildClientUrl();
 
         // Create the payload
