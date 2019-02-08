@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use RuntimeException;
 
 /**
  * Class RabbitReceiver
@@ -23,19 +24,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
  */
 class RabbitReceiver
 {
-
-    /** @var null|string */
-    private $host = null;
-
-    /** @var null|integer */
-    private $port = null;
-
-    /** @var null|string */
-    private $username = null;
-
-    /** @var null|string */
-    private $password = null;
-
     /** @var null|string */
     private $queue = null;
 
@@ -45,63 +33,55 @@ class RabbitReceiver
     /** @var integer */
     private $prefetchCount;
 
-    public function __construct()
+    /** @var null|string */
+    private $connectionName = 'default';
+
+    public function __construct(RabbitBuilder $builder = null, ?string $connectionName = 'default')
     {
-        $this->host = config('uhin.rabbit.host');
-        $this->port = config('uhin.rabbit.port');
-        $this->username = config('uhin.rabbit.username');
-        $this->password = config('uhin.rabbit.password');
-        $this->queue = config('uhin.rabbit.queue');
+
+        if(!is_null($builder))
+        {
+            $builder->execute();
+        }
+
+        $this->connectionName = $connectionName;
+
+        $this->setSettings($builder);
         $this->consumerTag = null;
         $this->prefetchCount = 1;
     }
 
-    /**
-     * Override the default host.
-     *
-     * @param null|string $host
-     * @return $this
-     */
-    public function setHost(?string $host)
+    private function setSettings(?RabbitBuilder $builder)
     {
-        $this->host = $host;
-        return $this;
-    }
+        /* Set the Exchange */
+        if(!is_null($builder) && method_exists($builder,'getExchange') && !is_null($builder->getExchange()))
+        {
+            $this->exchange = $builder->getExchange();
+        }
+        else
+        {
+            $this->exchange = config('uhin.rabbit.exchange');
+        }
 
-    /**
-     * Override the default port.
-     *
-     * @param null|integer $port
-     * @return $this
-     */
-    public function setPort(?integer $port)
-    {
-        $this->port = $port;
-        return $this;
-    }
+        /* Set the RoutingKey */
+        if(!is_null($builder) && method_exists($builder,'getRoutingKey') && !is_null($builder->getRoutingKey()))
+        {
+            $this->routingKey = $builder->getRoutingKey();
+        }
+        else
+        {
+            $this->routingKey = config('uhin.rabbit.routing_key');
+        }
 
-    /**
-     * Override the default username.
-     *
-     * @param null|string $username
-     * @return $this
-     */
-    public function setUsername(?string $username)
-    {
-        $this->username = $username;
-        return $this;
-    }
-
-    /**
-     * Override the default password.
-     *
-     * @param null|string $password
-     * @return $this
-     */
-    public function setPassword(?string $password)
-    {
-        $this->password = $password;
-        return $this;
+        /* Set the Queue */
+        if(!is_null($builder) && method_exists($builder,'getQueue') && !is_null($builder->getQueue()))
+        {
+            $this->queue = $builder->getQueue();
+        }
+        else
+        {
+            $this->queue = config('uhin.rabbit.queue');
+        }
     }
 
     /**
@@ -134,70 +114,24 @@ class RabbitReceiver
      * @param integer $prefetchCount
      * @return $this
      */
-    public function setPrefetchCount(integer $prefetchCount)
+    public function setPrefetchCount(int $prefetchCount)
     {
-        $this->prefetchCount = $prefetchCount;
+        if($prefetchCount > 0) {
+            $this->prefetchCount = $prefetchCount;
+        }
         return $this;
     }
 
     /**
-     * Opens a connection to Rabbit and initializes the queues. If the exchange/queues don't exist, then
-     * the exchange will be created, as well as a default queue and a dead letter exchange queue that are
-     * automatically bound to the exchange.
+     * Override the default connection name.
      *
-     * @param AMQPStreamConnection $connection
-     * @param AMQPChannel $channel
-     * @return boolean
+     * @param null|string $connectionName
+     * @return $this
      */
-    private function openConnection(&$connection, &$channel)
+    public function setConnectionName(?string $connectionName)
     {
-        // host
-        $host = $this->host;
-        if ($host === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_HOST in the .env file or call ->setHost(...)");
-        }
-
-        // port
-        $port = $this->port;
-        if ($port === null) {
-            throw new InvalidArgumentException("RabbitMQ port is undefined. Either set the RABBITMQ_PORT in the .env file or call ->setPort(...)");
-        }
-
-        // username
-        $username = $this->username;
-        if ($username === null) {
-            throw new InvalidArgumentException("RabbitMQ username is undefined. Either set the RABBITMQ_USERNAME in the .env file or call ->setUsername(...)");
-        }
-
-        // password
-        $password = $this->password;
-        if ($password === null) {
-            throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_PASSWORD in the .env file or call ->setPassword(...)");
-        }
-
-        // Create the connection to Rabbit
-        $connection = new AMQPStreamConnection($host, $port, $username, $password);
-        $channel = $connection->channel();
-
-        return true;
-    }
-
-    /**
-     * Closes the connection that was previously opened.
-     *
-     * @param AMQPStreamConnection $connection
-     * @param AMQPChannel $channel
-     * @return bool
-     */
-    private function closeConnection(&$connection, &$channel)
-    {
-        try {
-            $channel->close();
-            $connection->close();
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
+        $this->connectionName = $connectionName;
+        return $this;
     }
 
     /**
@@ -206,6 +140,7 @@ class RabbitReceiver
      * @param callable $callback The function that will be called for each message in the queue - this
      * callback will take one argument: the Rabbit message
      * @return bool
+     * @throws Exception
      */
     public function receive(callable $callback)
     {
@@ -221,12 +156,20 @@ class RabbitReceiver
             $consumerTag = gethostname();
         }
 
-        // Open the connection
-        /** @var AMQPStreamConnection $connection */
-        $connection = null;
-        /** @var AMQPChannel $channel */
-        $channel = null;
-        $this->openConnection($connection, $channel);
+        // if the connectionName is set, attempt to use it
+        if (is_null($this->connectionName)) {
+            throw new RuntimeException("Rabbit default connection name not set.");
+        }
+
+        $rcm = RabbitConnectionManager::getInstance();
+
+        if (!$rcm->checkConnection($this->connectionName)) {
+            throw new RuntimeException("Rabbit connection not set");
+        }
+
+        $channel = $rcm->getChannel($this->connectionName);
+
+        $this->setupGracefulStop($channel, $consumerTag);
 
         try {
             // Start reading the queue
@@ -236,28 +179,28 @@ class RabbitReceiver
             });
 
             // Don't exit until the callbacks have been released (basically... never exit)
-            while (count($channel->callbacks)) {
-                try {
+            while (count($channel->callbacks))
+            {
+                try
+                {
                     $channel->wait();
-                } catch(Exception $e) {
+                }
+                catch(Exception $e)
+                {
                     /** @noinspection PhpUndefinedMethodInspection */
-                    Log::debug("Error while reading queue . {$this->host}:{$this->port} {$this->queue}: " . $e->getMessage());
+                    Log::debug("Error while reading queue {$this->queue}: " . $e->getMessage());
                     die();
                 }
             }
 
             /** @noinspection PhpUndefinedMethodInspection */
-            Log::debug("Queue finished reading. {$this->host}:{$this->port} {$this->queue}");
+            Log::debug("Queue finished reading. {$this->queue}");
             return true;
         } catch (Exception $e) {
             $message = "Error in " . __FILE__ . " line " . __LINE__ .
                 " - Failed to read queue. " .
                 $e->getMessage() .
                 json_encode([
-                    'host' => $this->host,
-                    'port' => $this->port,
-                    'username' => $this->username,
-                    'password' => $this->password,
                     'queue' => $this->queue,
                     'consumerTag' => $this->consumerTag,
                     'prefetchCount' => $this->prefetchCount,
@@ -265,11 +208,33 @@ class RabbitReceiver
 
             /** @noinspection PhpUndefinedMethodInspection */
             Log::error($message);
-            return false;
-        } finally {
-            // Close the connection
-            $this->closeConnection($connection, $channel);
+            throw $e;
         }
     }
 
+    /**
+     * setupGracefulStop
+     * If the consumer would potentially have issues reprocessing the message we want to reduce those issues as much as possible
+     * By watching signals from outside of the application we can know if the connection needs to be closed and close gracefully
+     * @param $channel
+     * @param $consumerTag
+     */
+    protected function setupGracefulStop(&$channel, &$consumerTag) {
+        // Create anonymous $shutdown function because $connection isn't set on the object and there isn't a good way to access with with the pcntl_signals otherwise
+        $shutdown = function($signal , $signinfo) use ($channel, $consumerTag)
+        {
+            Log::info('Shutting down worker gracefully');
+            $channel->basic_cancel($consumerTag, false, true);
+            return;
+        };
+
+        // Watch kill signals (from outside the application) asynchronously
+        pcntl_async_signals(true);
+
+        // Watch for service being killed externally
+        pcntl_signal(SIGINT, $shutdown);
+
+        // Watch for CTRL+C
+        pcntl_signal(SIGTERM, $shutdown);
+    }
 }

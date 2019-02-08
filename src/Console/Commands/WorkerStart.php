@@ -38,6 +38,9 @@ class WorkerStart extends Command
     public function handle()
     {
 
+        @unlink(storage_path('framework/drain'));
+
+
         $workers_path = app_path('Workers/');
 
         if (!file_exists($workers_path)) {

@@ -7,9 +7,19 @@ use uhin\laravel_api\RabbitBuilder as BaseRabbitBuilder;
 class DummyClass extends BaseRabbitBuilder
 {
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        // You can overwrite these parent values
+        // $this->exchange = config('uhin.rabbit.exchange');
+        // $this->queue = config('uhin.rabbit.queue');
+        // $this->routingKey = config('uhin.rabbit.routing_key');
+        // $this->connectionName = 'default';
+    }
+
     protected function build()
     {
         parent::build();
     }
-
 }

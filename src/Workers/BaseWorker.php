@@ -11,6 +11,12 @@ abstract class BaseWorker
 
     public function start($pidName)
     {
+        /* Check for worker drain */
+        if($this->isDownForMaintenance())
+        {
+            die("Workers are draining could not start.\r\n");
+        }
+
         $pid_path = storage_path('pids/' . $pidName . '/');
 
         if (!file_exists($pid_path)) {
@@ -100,6 +106,11 @@ abstract class BaseWorker
             }
 
         }
+    }
+
+    public function isDownForMaintenance()
+    {
+        return file_exists(storage_path('framework/drain'));
     }
 
 }

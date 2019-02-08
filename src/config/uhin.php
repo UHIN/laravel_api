@@ -29,6 +29,19 @@ return [
         'exchange'              => env('RABBIT_EXCHANGE', null),
         'routing_key'           => env('RABBIT_ROUTING_KEY', null),
         'queue'                 => env('RABBIT_QUEUE', null),
+
+        // Optional rabbit connection properties
+        'vhost' => env('RABBIT_VHOST', '/'),
+        'insist' => env('RABBIT_INSIST', false),
+        'login_method' => env('RABBIT_LOGIN_METHOD', 'AMQPLAIN'),
+        'login_response' => env('RABBIT_LOGIN_RESPONSE', null),
+        'locale' => env('RABBIT_LOCALE', 'en_US'),
+        'connection_timeout' => env('RABBIT_CONNECTION_TIMEOUT', 3.0),
+        // read_write_timeout must be at least double the heartbeat value
+        'read_write_timeout' => env('RABBIT_READ_WRITE_TIMEOUT', 3.0),
+        'context' => env('RABBIT_CONTEXT', null),
+        'keepalive' => env('RABBIT_KEEPALIVE', false),
+        'heartbeat' => env('RABBIT_HEARTBEAT', 0),
     ],
 
 ];

@@ -29,10 +29,11 @@ class UhinApi
      *
      * @param Builder $query
      * @param Request $request
+     * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseAll(Builder $query, Request $request) {
-        $query = static::parseFilters($query, $request);
+    public static function parseAll(Builder $query, Request $request, $filterOverrides = null) {
+        $query = static::parseFilters($query, $request, $filterOverrides);
         $query = static::parseFields($query, $request);
         $query = static::parseCursor($query, $request);
         $query = static::parseSorts($query, $request);
@@ -47,9 +48,10 @@ class UhinApi
      *
      * @param Builder $query
      * @param Request $request
+     * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseFilters(Builder $query, Request $request) {
+    public static function parseFilters(Builder $query, Request $request, $filterOverrides = null) {
         if ($request->filled('filters')) {
             // build the filter object in the structure of:
             // $filters = {
@@ -76,34 +78,45 @@ class UhinApi
             // Execute the filter queries
             foreach ($filters as $column => $filter) {
                 foreach ($filter as $operator => $value) {
-                    switch ($operator) {
-                        case 'in':
-                            $query->whereIn($column, explode(',', $value));
-                            break;
-                        case 'not':
-                            $query->whereNotIn($column, explode(',', $value));
-                            break;
-                        case 'prefix':
-                            $query->where($column, 'like', "$value%");
-                            break;
-                        case 'postfix':
-                            $query->where($column, 'like', "%$value");
-                            break;
-                        case 'infix':
-                            $query->where($column, 'like', "%$value%");
-                            break;
-                        case 'before':
-                            $query->where($column, '<=', self::formatDateSearch($value));
-                            break;
-                        case 'after':
-                            $query->where($column, '>=', self::formatDateSearch($value));
-                            break;
-                        case 'null':
-                            $query->whereNull($column);
-                            break;
-                        case 'notnull':
-                            $query->whereNotNull($column);
-                            break;
+
+                    // First check if this filter has an override handler
+                    $overridden = $filterOverrides && ($filterOverrides($query, $column, $operator, $value) === true);
+
+                    // If no filter override was provided, then proceed
+                    if (!$overridden) {
+                        if ($column === 'fulltext_search') {
+                            $query->fullTextSearch($value);
+                        } else {
+                            switch ($operator) {
+                                case 'in':
+                                    $query->whereIn($column, explode(',', $value));
+                                    break;
+                                case 'not':
+                                    $query->whereNotIn($column, explode(',', $value));
+                                    break;
+                                case 'prefix':
+                                    $query->where($column, 'like', "$value%");
+                                    break;
+                                case 'postfix':
+                                    $query->where($column, 'like', "%$value");
+                                    break;
+                                case 'infix':
+                                    $query->where($column, 'like', "%$value%");
+                                    break;
+                                case 'before':
+                                    $query->where($column, '<=', self::formatDateSearch($value));
+                                    break;
+                                case 'after':
+                                    $query->where($column, '>=', self::formatDateSearch($value));
+                                    break;
+                                case 'null':
+                                    $query->whereNull($column);
+                                    break;
+                                case 'notnull':
+                                    $query->whereNotNull($column);
+                                    break;
+                            }
+                        }
                     }
                 }
             }
@@ -201,6 +214,15 @@ class UhinApi
         return gmdate('Y-m-d H:i:s', $timestamp);
     }
 
+    /**
+     * Fills a model with all data from the request except for the 'id' and 'type' attributes.
+     * NOTE: You should only use this function if you are on Laravel 5.6 or lower. Otherwise, use
+     * the fillModelFromValidator function.
+     *
+     * @param Model $model
+     * @param Request $request
+     * @return Model
+     */
     public static function fillModel(Model $model, Request $request)
     {
         foreach( $request->input('data') as $key => $value) {
@@ -212,5 +234,25 @@ class UhinApi
         return $model;
     }
 
+    /**
+     * Fills a model with the given validated data. This will only strip the 'type'
+     * attribute from the validated data.
+     *
+     * @param Model $model
+     * @param array $validatedData
+     * @param null|string $dataPrefix
+     * @return Model
+     */
+    public static function fillModelFromValidator(Model $model, array $validatedData, ?string $dataPrefix = null)
+    {
+        if ($dataPrefix !== null) {
+            $validatedData = $validatedData[$dataPrefix];
+        }
+        if (array_key_exists('type', $validatedData)) {
+            unset($validatedData['type']);
+        }
+        $model->fill($validatedData);
+        return $model;
+    }
 
 }
