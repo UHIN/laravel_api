@@ -12,12 +12,13 @@
 return [
 
     'pager_duty' => [
-        'api_key'           => env('PAGER_DUTY_API_KEY', null),
-        'integration_key'   => env('PAGER_DUTY_INTEGRATION_KEY', null),
-        'url'               => env('PAGER_DUTY_URL', 'https://events.pagerduty.com/v2/enqueue'),
-        'client'            => env('PAGER_DUTY_CLIENT', config('app.name')),
-        'severity'          => env('PAGER_DUTY_SEVERITY', 'info'),
-        'action'            => env('PAGER_DUTY_ACTION', 'trigger'),
+        'api_key'               => env('PAGER_DUTY_API_KEY', null),
+        'integration_key'       => env('PAGER_DUTY_INTEGRATION_KEY', null),
+        'url'                   => env('PAGER_DUTY_URL', 'https://events.pagerduty.com/v2/enqueue'),
+        'client'                => env('PAGER_DUTY_CLIENT', config('app.name')),
+        'severity'              => env('PAGER_DUTY_SEVERITY', 'info'),
+        'action'                => env('PAGER_DUTY_ACTION', 'trigger'),
+        'enableserverdetails'   => env('PAGER_DUTY_ENABLE_SERVER_DETAILS', true),
     ],
 
     'rabbit' => [
