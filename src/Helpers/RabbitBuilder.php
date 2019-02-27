@@ -26,6 +26,10 @@ class RabbitBuilder
     /** @var null|string */
     protected $queue = null;
 
+    protected $dlxQueue = null;
+
+    protected $dlxRoutingKey = null;
+
     public function __construct(?string $connectionName = 'default')
     {
         $this->exchange = config('uhin.rabbit.exchange');
@@ -237,9 +241,10 @@ class RabbitBuilder
         $queue = $this->queue;
         $routingKey = $this->routingKey;
 
+
         // Determine the DLX queue info
-        $dlxQueue = $queue . '.dlx';
-        $dlxRoutingKey = 'dlx';
+        $dlxQueue = is_null($this->dlxQueue) ? $queue . '.dlx' : $this->dlxQueue;
+        $dlxRoutingKey = is_null($this->dlxRoutingKey) ? 'dlx' : $this->dlxRoutingKey;
 
         // Build the Exchange
         $this->createExchange($exchange);
