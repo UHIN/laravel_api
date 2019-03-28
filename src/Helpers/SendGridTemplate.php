@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail;
+namespace uhin\laravel_api;
 
 use Exception;
 use SendGrid;
