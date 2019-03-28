@@ -6,7 +6,7 @@ use Exception;
 use SendGrid;
 use SendGrid\Mail\Mail;
 
-class SendGridTemplateEmail
+class SendGridTemplate
 {
 
     /** @var Mail */
