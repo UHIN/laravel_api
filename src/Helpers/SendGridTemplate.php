@@ -26,7 +26,16 @@ class SendGridTemplate
         $this->email->setTemplateId($template);
     }
 
-    public function addRecipient($address, $name, SendGrid\Mail\Personalization $personalization)
+    /**
+     * Adds a recipient to the email. This is an individual recipient with
+     * any additional information that you specify in the $personalization parameter,
+     * ie: CCs, BCCs, etc.
+     *
+     * @param string $address
+     * @param null|string $name
+     * @param null|SendGrid\Mail\Personalization $personalization
+     */
+    public function addRecipient(string $address, ?string $name = null, ?SendGrid\Mail\Personalization $personalization = null)
     {
         if ($this->email->getPersonalizationCount() === 1 && $this->email->getPersonalizations()[0]->getTos() === null) {
 

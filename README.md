@@ -99,3 +99,38 @@ The receiver can also take a builder and fills the properties for connecting to 
 ### Drain 
 
 ```php artisan uhin:workers:drain```
+
+
+# Using Twilio SendGrid
+
+First, make sure that you have specified the following config values. The `SendGridTemplate` class will use these configs:
+- `config('mail.from.address')`
+- `config('mail.from.name')`
+- `config('mail.sendgrid.api-key')`
+
+## Templates
+
+Example of how to send an email using a SendGrid email template and the `SendGridTemplate` class:
+
+```php
+$templateId = config('mail.sendgrid.template.test');
+$email = new SendGridTemplate($templateId);
+
+// Send the email to user1, and CC user2 and user3
+$metaDataA = new \SendGrid\Mail\Personalization();
+$metaDataA->addDynamicTemplateData('sendgrid_var_1', 'custom data value 1');
+$metaDataA->addDynamicTemplateData('sendgrid_var_2', 'custom data value 2');
+$metaDataA->addCc(new \SendGrid\Mail\Cc('user2@test.com', 'User 2'));
+$metaDataA->addCc(new \SendGrid\Mail\Cc('user3@test.com', 'User 3'));
+$email->addRecipient('user1@test.com', 'User 1', $metaDataA);
+
+// Send the email to user4, and BCC user5
+$metaDataB = new \SendGrid\Mail\Personalization();
+$metaDataB->addDynamicTemplateData('sendgrid_var_1', 'custom data value 3');
+$metaDataB->addDynamicTemplateData('sendgrid_var_2', 'custom data value 4');
+$metaDataB->addBcc(new \SendGrid\Mail\Bcc('user5@test.com', 'User 5'));
+$email->addRecipient('user4@test.com', 'User 4', $metaDataB);
+
+// Send out the email template with data attached to it
+$email->send();
+```
