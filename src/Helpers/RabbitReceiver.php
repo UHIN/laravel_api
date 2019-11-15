@@ -188,7 +188,7 @@ class RabbitReceiver
                 catch(Exception $e)
                 {
                     /** @noinspection PhpUndefinedMethodInspection */
-                    Log::debug("Error while reading queue {$this->queue}: " . $e->getMessage());
+                    Log::error("Error while reading queue {$this->queue}: " . $e->getMessage());
                     die();
                 }
             }
