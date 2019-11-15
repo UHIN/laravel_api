@@ -115,6 +115,18 @@ class UhinApi
                                 case 'notnull':
                                     $query->whereNotNull($column);
                                     break;
+                                case 'less':
+                                    $query->where($column, '<',$value);
+                                    break;
+                                case 'lessequal':
+                                    $query->where($column, '<=',$value);
+                                    break;
+                                case 'greater':
+                                    $query->where($column, '>',$value);
+                                    break;
+                                case 'greaterequal':
+                                    $query->where($column, '>=',$value);
+                                    break;
                             }
                         }
                     }
