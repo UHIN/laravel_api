@@ -3,6 +3,7 @@
 namespace uhin\laravel_api\Commands;
 
 use Illuminate\Console\GeneratorCommand;
+use Illuminate\Support\Str;
 
 class MakeEndpoint extends GeneratorCommand
 {
@@ -53,7 +54,7 @@ class MakeEndpoint extends GeneratorCommand
 
         // Migration
         $this->call('make:migration', [
-            'name' => "create_" . snake_case(str_plural($model)) . "_table",
+            'name' => "create_" . Str::snake(Str::plural($model)) . "_table",
         ]);
 
         // Factory
@@ -64,13 +65,13 @@ class MakeEndpoint extends GeneratorCommand
 
         // Seeder
         $this->call('make:seed', [
-            'name' => str_plural($model) . "TableSeeder",
+            'name' => Str::plural($model) . "TableSeeder",
         ]);
         // Make a call to the new seeder in the DatabaseSeeder.php file
-        $seederCall = '$this->call(' . str_plural($model) . 'TableSeeder::class);';
+        $seederCall = '$this->call(' . Str::plural($model) . 'TableSeeder::class);';
         $seeder = database_path('seeds/DatabaseSeeder.php');
         $contents = file_get_contents($seeder);
-        if (!str_contains($contents, $seederCall)) {
+        if (!Str::contains($contents, $seederCall)) {
             $contents = preg_replace('/(function\s+run.*?\{)(.*?)(\})/s', '${1}${2}' . PHP_EOL . '        ' . $seederCall . PHP_EOL . '    ${3}', $contents);
             file_put_contents($seeder, $contents);
         }
@@ -124,8 +125,8 @@ class MakeEndpoint extends GeneratorCommand
      */
     protected function replaceResourceType($stub, $name)
     {
-        $stub = str_replace('DummyTypePlural', str_replace('_', '-', snake_case(str_plural($this->argument('name')))), $stub);
-        $stub = str_replace('DummyType', str_replace('_', '-', snake_case($this->argument('name'))), $stub);
+        $stub = str_replace('DummyTypePlural', str_replace('_', '-', Str::snake(Str::plural($this->argument('name')))), $stub);
+        $stub = str_replace('DummyType', str_replace('_', '-', Str::snake($this->argument('name'))), $stub);
         $stub = str_replace('DummyModelVariable', lcfirst(class_basename($this->argument('name'))), $stub);
         $stub = str_replace('DummyModel', $this->argument('name'), $stub);
         return $stub;
