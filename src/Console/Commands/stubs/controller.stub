@@ -55,6 +55,7 @@ class DummyClass extends Controller
         $DummyModelVariable = UhinApi::fillModelFromValidator($DummyModelVariable, $validated, 'data');
         $DummyModelVariable->save();
 
+        $DummyModelVariable = DummyModel::findOrFail($DummyModelVariable->id);
         $resource = new DummyModelResource($DummyModelVariable);
         return $resource->response()->setStatusCode(201);
     }
