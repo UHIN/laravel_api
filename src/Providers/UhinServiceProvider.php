@@ -16,6 +16,11 @@ class UhinServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/uhin.php' => config_path('uhin.php'),
         ], 'uhin');
+
+        if (! $this->app->routesAreCached()) 
+        {
+            require __DIR__.'/../routes/shc.php';
+        }
     }
 
     /**
