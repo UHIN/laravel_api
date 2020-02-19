@@ -143,23 +143,18 @@ class RabbitConnectionManager
             return false;
         }        
 
-        try {
-            $connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
+        $connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
 
-            if (is_null($connection)) {
-                return false;
-            }
-
-            $this->connections[$name] = [
-                'connection' => $connection,
-                'channel' => $connection->channel()
-            ];
-
-            return true;
-
-        } catch (Exception $e) {
+        if (is_null($connection)) {
             return false;
         }
+
+        $this->connections[$name] = [
+            'connection' => $connection,
+            'channel' => $connection->channel()
+        ];
+
+        return true;
     }
 
     /**
@@ -205,16 +200,12 @@ class RabbitConnectionManager
 
         $closingChannel = $this->getChannel($name);
         $closingConnection = $this->getConnection($name);
-        
-        try {
-            if ($closingChannel) {
-                $closingChannel->close();
-            }
-            if ($closingConnection) {
-                $closingConnection->close();
-            }
-        } catch (Exception $e) {
-            return false;
+
+        if ($closingChannel) {
+            $closingChannel->close();
+        }
+        if ($closingConnection) {
+            $closingConnection->close();
         }
 
         unset($this->connections[$name]);

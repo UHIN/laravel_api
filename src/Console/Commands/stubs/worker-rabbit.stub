@@ -33,6 +33,8 @@ class DummyClass extends BaseRabbitWorker
 
                //Message needs to be reprocessed place back in queue.
                $channel->basic_nack($deliveryTag, false, true);
+
+               Log::error($e);
            }
 
         });
