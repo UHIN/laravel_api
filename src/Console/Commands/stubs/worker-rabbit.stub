@@ -4,6 +4,8 @@
 
 namespace DummyNamespace;
 
+use Illuminate\Support\Facades\Log;
+use uhin\laravel_api\RabbitBuilder;
 use uhin\laravel_api\Workers\BaseRabbitWorker;
 use uhin\laravel_api\RabbitReceiver;
 
@@ -27,14 +29,14 @@ class DummyClass extends BaseRabbitWorker
                //Message successfully processed, mark as completed in Rabbit
                $channel->basic_ack($deliveryTag);
 
-           } catch (\Exception $e){
+           } catch (\Throwable $e){
+               Log::error($e);
+
                //Message is bad, send to dead letter queue.
                $channel->basic_nack($deliveryTag);
 
                //Message needs to be reprocessed place back in queue.
-               $channel->basic_nack($deliveryTag, false, true);
-
-               Log::error($e);
+               //$channel->basic_nack($deliveryTag, false, true);
            }
 
         });
