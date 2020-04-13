@@ -2,10 +2,12 @@
 
 namespace uhin\laravel_api;
 
+
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Class PagerDuty
@@ -47,6 +49,9 @@ class PagerDuty
 
     /** @var null|string */
     private $enableServerDetails = null;
+
+    /** @var null */
+    private $dedup_key = null;
 
     public function __construct() {
         $this->apiUrl = config('uhin.pager_duty.url');
@@ -159,6 +164,15 @@ class PagerDuty
     }
 
     /**
+     * @param string|null $key
+     * @return $this
+     */
+    public function setDedupKey(?string $key) {
+        $this->dedup_key = $key;
+        return $this;
+    }
+
+    /**
      * Builds the URI string for the current service/application, eg: https://api.dev.uhin.org/
      *
      * @return string
@@ -185,8 +199,8 @@ class PagerDuty
     /**
      * Makes the actual call to PagerDuty. This method will return true upon success, and false upon
      * failure.
-     *
      * @return bool
+     * @throws Exception
      */
     public function send() {
 
@@ -261,6 +275,17 @@ class PagerDuty
         }
         $client_url = $this->buildClientUrl();
 
+        /* Check the deduplication Key */
+        if (is_null($this->dedup_key)) {
+            /* Generate a new key */
+            try {
+                $dedup_key = Uuid::uuid4();
+            } catch (Exception $e) {
+                $dedup_key = '';
+            }
+        } else {
+            $dedup_key = $this->dedup_key;
+        }
 
         // Create the payload
         $args = [
@@ -275,6 +300,7 @@ class PagerDuty
                 'custom_details'    => $details,
             ],
             'routing_key'   => $integrationKey,
+            'dedup_key'     => $dedup_key,
             'event_action'  => $action,
             'client'        => $client,
             'client_url'    => $client_url,
@@ -325,5 +351,111 @@ class PagerDuty
             return false;
         }
     }
+
+    /**
+     * Resolves a open pager duty incident based on the dedup_key
+     * @return bool|mixed
+     * @throws Exception
+     */
+    public function resolve() {
+
+        // apiUrl
+        $apiUrl = $this->apiUrl;
+        if ($apiUrl === null) {
+            throw new InvalidArgumentException('PagerDuty could not find the api url. Either set the PAGER_DUTY_URL in the .env file or use the ->setApiUrl(...) method');
+        }
+
+        // apiKey
+        $apiKey = $this->apiKey;
+        if ($apiKey === null || strlen($apiKey) <= 0) {
+            throw new InvalidArgumentException('PagerDuty error: You must specify your PAGER_DUTY_API_KEY in the .env file');
+        }
+
+        // integration key
+        $integrationKey = $this->integrationKey;
+        if ($integrationKey === null || strlen($integrationKey) <= 0) {
+            throw new InvalidArgumentException('PagerDuty could not find an integration key to use. Either set the PAGER_DUTY_INTEGRATION_KEY in the .env file or use the ->setIntegrationKey(...) method');
+        }
+
+        // client
+        $client = $this->client;
+        if ($client === null) {
+            throw new InvalidArgumentException('PagerDuty could not find the client. Either set the PAGER_DUTY_CLIENT in the .env file or use the ->setClient(...) method');
+        }
+
+        // action
+        $action = 'resolve';
+        if ($action === null) {
+            $action = 'resolve';
+        }
+
+        $client_url = $this->buildClientUrl();
+
+
+        /* Check the deduplication Key */
+        $dedup_key = $this->dedup_key;
+        if (is_null($this->dedup_key)) {
+            throw new InvalidArgumentException('PagerDuty could not find the dedup key. PagerDuty cannot resolve a incident without it. Use ->setDedupKey(...) method to set it.');
+        }
+
+        // Create the payload
+        $args = [
+            'routing_key'   => $integrationKey,
+            'dedup_key'     => $dedup_key,
+            'event_action'  => $action,
+            'client'        => $client,
+            'client_url'    => $client_url,
+        ];
+        $result = null;
+
+        try {
+            // Build the headers
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Token token=' . $apiKey,
+            ];
+
+            // Build the curl request
+            $handle = curl_init();
+            curl_setopt($handle, CURLOPT_URL, $apiUrl);
+            curl_setopt($handle, CURLOPT_POST, true);
+            curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 2);
+            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+
+            curl_setopt($handle, CURLOPT_HEADER, true);
+            curl_setopt($handle, CURLOPT_HTTPHEADER, $headers);
+
+            curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($args));
+            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+
+            // Send the request
+            $result = curl_exec($handle);
+            $info  = curl_getinfo($handle);
+
+            if ($info['http_code'] !== 202 && $info['http_code'] !== 201) {
+                throw new Exception("Status code: {$info['http_code']} returned from PagerDuty");
+            }
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            if (config('app.debug')) {
+                Log::debug("Event triggered in PagerDuty. " . $result);
+            }
+
+            return json_decode($result);
+
+        } catch (Exception $e) {
+            $message = "Error in " . __FILE__ . " line " . __LINE__ .
+                " - Failed to create incident. " .
+                $e->getMessage() .
+                json_encode($args, JSON_PRETTY_PRINT) .
+                json_encode(json_decode($result), JSON_PRETTY_PRINT);
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            Log::error($message);
+            return false;
+        }
+    }
+
 
 }

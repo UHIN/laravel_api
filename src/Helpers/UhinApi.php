@@ -6,6 +6,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use \Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class UhinApi
 {
@@ -115,6 +116,18 @@ class UhinApi
                                 case 'notnull':
                                     $query->whereNotNull($column);
                                     break;
+                                case 'less':
+                                    $query->where($column, '<',$value);
+                                    break;
+                                case 'lessequal':
+                                    $query->where($column, '<=',$value);
+                                    break;
+                                case 'greater':
+                                    $query->where($column, '>',$value);
+                                    break;
+                                case 'greaterequal':
+                                    $query->where($column, '>=',$value);
+                                    break;
                             }
                         }
                     }
@@ -186,7 +199,7 @@ class UhinApi
             $sorts = explode(",", $request->query('sort'));
 
             foreach ($sorts as $sort) {
-                if (starts_with($sort, '-')) {
+                if (Str::startsWith($sort, '-')) {
                     $field = substr($sort, 1);
                     $direction = 'desc';
                 } else {

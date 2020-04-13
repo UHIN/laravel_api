@@ -14,6 +14,7 @@ First change the version of the require for this library to either: "dev-master"
 
 Second add this block of code to your composer.json (editing the path):
 
+
 "repositories": [
         {
             "type": "path",
