@@ -10,26 +10,29 @@ class StandardHealthCheckController extends BaseController
 {
     /**
      * @param Request $request
-     * @throws \Exception
+     * @return mixed
      */
     public function shc(Request $request)
     {
         /* Get a list of external services that are depedencies. */
         $endpoints = config('uhin.endpoints');
 
+        $db_connection = $this->checkDatabaseConnection();
+
+        $version_info = $this->getVersionControlInfo();
+
+        if ($db_connection) {
+            $status_code = 200;
+        } else {
+            $status_code = 500;
+        }
+
         return response()->json([
             'success' => true,
-            'database_connection' => $this->checkDatabaseConnection(),
-            'rabbit_connection' => $this->checkRabbitConnection(),
-            'version' => $this->getVersionControlInfo(),
+            'database_connection' => $db_connection,
+            'version' => $version_info,
             'service_dependencies' => $endpoints
-        ])->setStatusCode(200);
-
-    }
-
-    private function checkRabbitConnection()
-    {
-        
+        ])->setStatusCode($status_code);
     }
 
     /**
@@ -37,13 +40,10 @@ class StandardHealthCheckController extends BaseController
      */
     private function checkDatabaseConnection()
     {
-        try
-        {
+        try {
             DB::connection()->getPdo();
             return true;
-        }
-        catch (\Throwable $t)
-        {
+        } catch (\Throwable $t) {
             return false;
         }
     }
@@ -53,17 +53,14 @@ class StandardHealthCheckController extends BaseController
      */
     private function getVersionControlInfo()
     {
-        try
-        {
+        try {
             $commitHash = trim(exec('git log --pretty="%h" -n1 HEAD'));
 
             $commitDate = new \DateTime(trim(exec('git log -n1 --pretty=%ci HEAD')));
             $commitDate->setTimezone(new \DateTimeZone('UTC'));
 
-            return "".$commitHash." ".$commitDate->format('Y-m-d H:i:s');
-        }
-        catch (\Exception $e)
-        {
+            return "" . $commitHash . " " . $commitDate->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
             return "";
         }
     }
