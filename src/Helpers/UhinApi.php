@@ -2,10 +2,10 @@
 
 namespace uhin\laravel_api;
 
-use Doctrine\DBAL\Query\QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use \Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class UhinApi
@@ -33,11 +33,49 @@ class UhinApi
      * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseAll(Builder $query, Request $request, $filterOverrides = null) {
-        $query = static::parseFilters($query, $request, $filterOverrides);
-        $query = static::parseFields($query, $request);
-        $query = static::parseCursor($query, $request);
-        $query = static::parseSorts($query, $request);
+    public static function parseAll($query, Request $request, $filterOverrides = null, $classKeyOverride = null, $compatibilityFlag = true) {
+        $query = static::parseFilters($query, $request, $filterOverrides, $classKeyOverride);
+        $query = static::parseFields($query, $request, $classKeyOverride, $compatibilityFlag);
+        $query = static::parseCursor($query, $request, $classKeyOverride);
+        $query = static::parseSorts($query, $request, $classKeyOverride);
+        $query = static::parseRelationships($query, $request, $classKeyOverride);
+        return $query;
+    }
+
+    /**
+     * Parses relationships.
+     *
+     * Usage:
+     *   example.com?relationships=value1
+     *   example.com?relationships[class-key-name]=value1
+     */
+    public static function parseRelationships($query, Request $request, $classKeyOverride = null) {
+        $classKey = $classKeyOverride ?? self::getClassKeyName($query->getModel());
+
+        if ($request->filled('relationships')) {
+
+            $relationships = $request->query('relationships');
+            
+            if (!is_array($relationships)) {
+                // No specified class
+                $relationships = explode(",", $relationships);
+            } else if (key_exists($classKey, $relationships)) {
+                // Reassign the sorts to use the ones specific to that class.
+                $relationships = explode(",", $relationships[$classKey]);
+            } else {
+                // No values to sort by
+                $relationships = [];
+            }
+
+            foreach($relationships as $relationship) {
+                $relationshipCamel = Str::camel($relationship);
+
+                $query->with([$relationshipCamel => function($relationshipQuery) use($request) {
+                    self::parseAll($relationshipQuery, $request, null, null, false);
+                }]);
+            }
+        }
+
         return $query;
     }
 
@@ -46,13 +84,16 @@ class UhinApi
      *
      * Usage:
      *  example.com?filters[field1][operator1]=value1&filters[field2][operator2]=value
+     *  example.com?filters[class-key-name][operator1]=value1&filters[class2-table-name][operator2]=value
      *
      * @param Builder $query
      * @param Request $request
      * @param callable $filterOverrides
      * @return Builder
      */
-    public static function parseFilters(Builder $query, Request $request, $filterOverrides = null) {
+    public static function parseFilters($query, Request $request, $filterOverrides = null, $classKeyOverride = null) {
+        $classKey = $classKeyOverride ?? self::getClassKeyName($query->getModel());
+
         if ($request->filled('filters')) {
             // build the filter object in the structure of:
             // $filters = {
@@ -67,6 +108,12 @@ class UhinApi
             // }
             $filters = [];
             $raw_filters = $request->query('filters');
+
+            if (key_exists($classKey, $raw_filters)) {
+                // Reassign the filters to use the ones specific to that class.
+                $raw_filters = $raw_filters[$classKey];
+            }
+
             foreach ($raw_filters as $column => $filter) {
                 $filters[$column] = [];
                 if (!is_array($filter)) {
@@ -142,15 +189,34 @@ class UhinApi
      *
      * Usage:
      *  example.com?fields=field1,field2
+     *  example.com?[class-key-name]=field1,field2&[class2-table-name]=field3,field4
      *
      * @param Builder $query
      * @param Request $request
      * @return Builder
      */
-    public static function parseFields(Builder $query, Request $request) {
+    public static function parseFields($query, Request $request, $classKeyOverride = null, $compatibilityFlag = true) {
+        $classKey = $classKeyOverride ?? self::getClassKeyName($query->getModel());
+
         if($request->filled('fields')) {
-            $array = $request->query('fields');
-            $fields = explode(",", $array[key($array)]);
+            $fields = $request->query('fields');
+
+            if (!is_array($fields)) {
+                // No specified class
+                $fields = explode(",", $fields);
+            } else if (key_exists($classKey, $fields)) {
+                // Reassign the fields to use the ones specific to that class.
+                $fields = explode(",", $fields[$classKey]);
+            } else if (!is_null(key($fields)) && $compatibilityFlag) {
+                // Assign for backwards compatibility
+                $key = key($fields);
+                $fields = explode(",", $fields[$key]);
+                Log::notice("Mismatched Key: Expected Class Key - {$classKey},  Actual Key - {$key}, ");
+            } else {
+                // Show all fields
+                $fields = ['*'];
+            }
+
             $query->select($fields);
         }
         return $query;
@@ -161,20 +227,43 @@ class UhinApi
      *
      * Usage:
      *  example.com?cursor=100&limit=10
+     *  example.com?[class-key-name]cursor=10&limit[class-key-name]limit=10
      *
      * @param Builder $query
      * @param Request $request
      * @return Builder
      */
-    public static function parseCursor(Builder $query, Request $request) {
+    public static function parseCursor($query, Request $request, $classKeyOverride = null) {
+        $classKey = $classKeyOverride ?? self::getClassKeyName($query->getModel());
+
         if($request->filled('cursor')) {
             $cursor = $request->query('cursor');
+
+            if (is_array($cursor)) {
+                if (key_exists($classKey, $cursor)) {
+                    // Reassign the cursor to use the ones specific to that class.
+                    $cursor = $cursor[$classKey];
+                } else {
+                    // Use default cursor.
+                    $cursor = 0;
+                }
+            }
         }
         else {
             $cursor = 0;
         }
         if($request->filled('limit')) {
             $limit = $request->query('limit');
+
+            if (is_array($limit)) {
+                if (key_exists($classKey, $limit)) {
+                    // Reassign the limit to use the ones specific to that class.
+                    $limit = $limit[$classKey];
+                } else {
+                    // Use default limit.
+                    $limit = 20;
+                }
+            }
         }
         else {
             $limit = 20;
@@ -189,14 +278,28 @@ class UhinApi
      *
      * Usage:
      *  example.com?sort=field1,-field2
+     *  example.com?[class-key-name]sort=field1,-field2&[class2-table-name]=-field3
      *
      * @param Builder $query
      * @param Request $request
      * @return Builder
      */
-    public static function parseSorts(Builder $query, Request $request) {
+    public static function parseSorts($query, Request $request, $classKeyOverride = null) {
+        $classKey = $classKeyOverride ?? self::getClassKeyName($query->getModel());
+        
         if($request->filled('sort')){
-            $sorts = explode(",", $request->query('sort'));
+            $sorts = $request->query('sort');
+
+            if (!is_array($sorts)) {
+                // No specified class
+                $sorts = explode(",", $sorts);
+            } else if (key_exists($classKey, $sorts)) {
+                // Reassign the sorts to use the ones specific to that class.
+                $sorts = explode(",", $sorts[$classKey]);
+            } else {
+                // No values to sort by
+                $sorts = [];
+            }
 
             foreach ($sorts as $sort) {
                 if (Str::startsWith($sort, '-')) {
@@ -268,4 +371,13 @@ class UhinApi
         return $model;
     }
 
+    /**
+     * Gets the dash-cased type from the class of the model associated with the query.
+     * 
+     * @param object $instance
+     * @return string
+     */
+    public static function getClassKeyName($instance) {
+        return Str::kebab(class_basename($instance));
+    }
 }
