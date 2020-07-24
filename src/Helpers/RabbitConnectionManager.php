@@ -141,7 +141,7 @@ class RabbitConnectionManager
 
         if (array_key_exists($name, $this->connections)) {
             return false;
-        }        
+        }
 
         $connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
 
@@ -175,6 +175,27 @@ class RabbitConnectionManager
         }
 
         return $this->connections[$name]['connection'];
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function resetConnection(string $name = 'default') {
+        if (!array_key_exists($name, $this->connections)) {
+            return false;
+        }
+
+        $connection = $this->connections[$name]['connection'];
+
+        $connection->reconnect();
+
+        $this->connections[$name] = [
+            'connection' => $connection,
+            'channel' => $connection->channel()
+        ];
+
+        return true;
     }
 
     /**

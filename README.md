@@ -14,13 +14,20 @@ First change the version of the require for this library to either: "dev-master"
 
 Second add this block of code to your composer.json (editing the path):
 
-
+```
 "repositories": [
-        {
-            "type": "path",
-            "url": "/Users/rmclelland/Projects/laravel_api"
-        }
-    ]
+    {
+        "type": "path",
+        "url": "/Users/rmclelland/Projects/laravel_api"
+    }
+]
+```
+
+Run composer update from your project directory. This will create a symlink between the library and the project using this library.
+
+```
+composer update uhin/laravel_api
+```
 
 # Upgrade guides
 

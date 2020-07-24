@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
 use PhpAmqpLib\Message\AMQPMessage;
 use RuntimeException;
 
@@ -177,18 +178,40 @@ class RabbitSender
         $channel = $rcm->getChannel($this->connectionName);
 
         try {
-            // Send the message
+            // Generate the AMQP Message
             $amqpMessage = new AMQPMessage($message, [
                 'delivery_mode' => 2,
             ]);
-            $channel->basic_publish($amqpMessage, $exchange, $routingKey);
 
-            /** @noinspection PhpUndefinedMethodInspection */
-            if (config('app.debug'))
-            {
-                Log::debug("Message queued to Rabbit. {$this->exchange}:{$this->routingKey}");
+            try {
+                // Send the message
+                $channel->basic_publish($amqpMessage, $exchange, $routingKey);
+
+                /** @noinspection PhpUndefinedMethodInspection */
+                if (config('app.debug')) {
+                    Log::debug("Message queued to Rabbit. {$this->exchange}:{$this->routingKey}");
+                }
+
+                return true;
+            } catch (AMQPConnectionClosedException $e) {
+                /** @noinspection PhpUndefinedMethodInspection */
+                if (config('app.debug')) {
+                    Log::debug("Rabbit connection closed. Reconnecting and retrying to queue message. {$this->exchange}:{$this->routingKey}");
+                }
+
+                $rcm->resetConnection($this->connectionName);
+                $channel = $rcm->getChannel($this->connectionName);
+
+                // Retry sending the message
+                $channel->basic_publish($amqpMessage, $exchange, $routingKey);
+
+                /** @noinspection PhpUndefinedMethodInspection */
+                if (config('app.debug')) {
+                    Log::debug("Retry message successfully queued to Rabbit. {$this->exchange}:{$this->routingKey}");
+                }
+
+                return true;
             }
-            return true;
         } catch (Exception $e) {
             $message = "Error in " . __FILE__ . " line " . __LINE__ .
                 " - Failed to publish message. " .
