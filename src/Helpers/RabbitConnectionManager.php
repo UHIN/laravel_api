@@ -4,7 +4,7 @@ namespace uhin\laravel_api;
 
 use Exception;
 use InvalidArgumentException;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AMQPSSLConnection;
 
 /**
  * Class RabbitConnectionManager
@@ -13,10 +13,8 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
  */
 class RabbitConnectionManager
 {
-
     /** @var null|object */
     private $connections = [];
-
     private static $instance = null;
 
     /**
@@ -41,10 +39,14 @@ class RabbitConnectionManager
         $context = config('uhin.rabbit.context', null);
         $keepalive = config('uhin.rabbit.keepalive', false);
         $heartbeat = config('uhin.rabbit.heartbeat', 0);
-
+        $ssl_options = [
+            '',
+            'cafile' => '', // no cert required
+            'verify_peer' => false,
+        ];
         $this->connections = [];
         if (!is_null($host) && !is_null($port) && !is_null($username) && !is_null($password)) {
-            $this->addConnection('default', $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
+            $this->addConnection('default', $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat, $ssl_options);
         }
     }
 
@@ -67,7 +69,8 @@ class RabbitConnectionManager
     /**
      * @return null|RabbitConnectionManager
      */
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (is_null(self::$instance)) {
             self::$instance = new RabbitConnectionManager();
         }
@@ -77,7 +80,8 @@ class RabbitConnectionManager
     /**
      *
      */
-    public function __destruct() {
+    public function __destruct()
+    {
         foreach ($this->connections as $connectionName => $connection) {
             $this->removeConnection($connectionName);
         }
@@ -100,6 +104,7 @@ class RabbitConnectionManager
      * @param null $context
      * @param bool $keepalive
      * @param int $heartbeat
+     * @param array $ssl_options
      * @return bool
      */
     public function addConnection(
@@ -117,43 +122,57 @@ class RabbitConnectionManager
         float $read_write_timeout = 3.0,
         $context = null,
         bool $keepalive = false,
-        int $heartbeat = 0
-    ) {
+        int $heartbeat = 0,
+        array $ssl_options
+    )
+    {
         // host
         if ($host === null) {
             throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_HOST in the .env file or call ->setHost(...)");
         }
-
         // port
         if ($port === null) {
             throw new InvalidArgumentException("RabbitMQ port is undefined. Either set the RABBITMQ_PORT in the .env file or call ->setPort(...)");
         }
-
         // username
         if ($username === null) {
             throw new InvalidArgumentException("RabbitMQ username is undefined. Either set the RABBITMQ_USERNAME in the .env file or call ->setUsername(...)");
         }
-
         // password
         if ($password === null) {
             throw new InvalidArgumentException("RabbitMQ host is undefined. Either set the RABBITMQ_PASSWORD in the .env file or call ->setPassword(...)");
         }
-
         if (array_key_exists($name, $this->connections)) {
             return false;
         }
-
-        $connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
+        $options = [
+            'insist' => $insist,
+            'login_method' => $login_method,
+            'login_response' => $login_response,
+            'locale' => $locale,
+            'connection_timeout' => $connection_timeout,
+            'read_write_timeout' => $read_write_timeout,
+            'keepalive' => $keepalive,
+            'heartbeat' => $heartbeat,
+        ];
+        $connection = new AMQPSSLConnection(
+            $host,
+            $port,
+            $username,
+            $password,
+            $vhost,
+            $ssl_options,
+            $options,
+            'ssl'
+        );
 
         if (is_null($connection)) {
             return false;
         }
-
         $this->connections[$name] = [
             'connection' => $connection,
             'channel' => $connection->channel()
         ];
-
         return true;
     }
 
@@ -161,7 +180,8 @@ class RabbitConnectionManager
      * @param string $name
      * @return bool
      */
-    public function checkConnection(string $name = 'default') {
+    public function checkConnection(string $name = 'default')
+    {
         return array_key_exists($name, $this->connections);
     }
 
@@ -169,11 +189,11 @@ class RabbitConnectionManager
      * @param string $name
      * @return bool
      */
-    public function getConnection(string $name = 'default') {
+    public function getConnection(string $name = 'default')
+    {
         if (!array_key_exists($name, $this->connections)) {
             return false;
         }
-
         return $this->connections[$name]['connection'];
     }
 
@@ -181,20 +201,17 @@ class RabbitConnectionManager
      * @param string $name
      * @return bool
      */
-    public function resetConnection(string $name = 'default') {
+    public function resetConnection(string $name = 'default')
+    {
         if (!array_key_exists($name, $this->connections)) {
             return false;
         }
-
         $connection = $this->connections[$name]['connection'];
-
         $connection->reconnect();
-
         $this->connections[$name] = [
             'connection' => $connection,
             'channel' => $connection->channel()
         ];
-
         return true;
     }
 
@@ -202,11 +219,11 @@ class RabbitConnectionManager
      * @param string $name
      * @return bool
      */
-    public function getChannel(string $name = 'default') {
+    public function getChannel(string $name = 'default')
+    {
         if (!array_key_exists($name, $this->connections)) {
             return false;
         }
-
         return $this->connections[$name]['channel'];
     }
 
@@ -214,26 +231,25 @@ class RabbitConnectionManager
      * @param string $name
      * @return bool
      */
-    public function removeConnection(string $name) {
+    public function removeConnection(string $name)
+    {
         if (!array_key_exists($name, $this->connections)) {
             return false;
         }
-
         $closingChannel = $this->getChannel($name);
         $closingConnection = $this->getConnection($name);
-
         if ($closingChannel) {
             $closingChannel->close();
         }
         if ($closingConnection) {
             $closingConnection->close();
         }
-
         unset($this->connections[$name]);
         return true;
     }
 
     /**
+     * @param string $name
      * @param string $host
      * @param string $port
      * @param string $username
@@ -248,6 +264,8 @@ class RabbitConnectionManager
      * @param null $context
      * @param bool $keepalive
      * @param int $heartbeat
+     * @param array $ssl_options
+     * @return bool
      */
     public function updateConnection(
         string $name,
@@ -264,12 +282,13 @@ class RabbitConnectionManager
         float $read_write_timeout = 3.0,
         $context = null,
         bool $keepalive = false,
-        int $heartbeat = 0
-    ) {
+        int $heartbeat = 0,
+        array $ssl_options
+    )
+    {
         if (!$this->removeConnection($name)) {
             return false;
         }
-
-        return $this->addConnection($name, $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat);
+        return $this->addConnection($name, $host, $port, $username, $password, $vhost, $insist, $login_method, $login_response, $locale, $connection_timeout, $read_write_timeout, $context, $keepalive, $heartbeat, $ssl_options);
     }
 }
