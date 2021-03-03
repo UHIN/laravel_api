@@ -35,6 +35,8 @@ Review these documents when upgrading versions.
 
 [V1 to V2 Upgrade Guide](./docs/v2-upgrade-notes.md)
 
+[V2 to V3 Upgrade Guide](./docs/v3-upgrade-notes.md)
+
 # Using Rabbit
 
 ## Rabbit Builders

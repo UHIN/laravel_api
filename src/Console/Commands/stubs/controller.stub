@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DummyModel;
 use App\Http\Resources\DummyModelResource;
 use Illuminate\Http\Request;
-use uhin\laravel_api\UhinApi;
+use uhin\laravel_api\Helpers\UhinApi;
 
 class DummyClass extends Controller
 {

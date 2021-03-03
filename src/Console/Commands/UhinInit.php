@@ -1,6 +1,6 @@
 <?php
 
-namespace uhin\laravel_api\Commands;
+namespace uhin\laravel_api\Console\Commands;
 
 use Illuminate\Console\Command;
 
@@ -90,6 +90,7 @@ class UhinInit extends Command
 
     private function removeWebRoutes() {
         $this->deleteFile(base_path('routes/web.php'));
+        touch(base_path('routes/web.php'));
 
         // Remove the web routes from the provider
         $provider = app_path('Providers/RouteServiceProvider.php');

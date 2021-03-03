@@ -1,5 +1,5 @@
-Route::get('/DummyTypePlural', 'DummyClassController@index');
-Route::get('/DummyTypePlural/{DummyModelVariableId}', 'DummyClassController@show');
-Route::post('/DummyTypePlural', 'DummyClassController@store');
-Route::patch('/DummyTypePlural/{DummyModelVariable}', 'DummyClassController@update');
-Route::delete('/DummyTypePlural/{DummyModelVariable}', 'DummyClassController@destroy');
+Route::get('/DummyTypePlural', [DummyClassController::class, 'index']);
+Route::get('/DummyTypePlural/{DummyModelVariableId}', [DummyClassController::class, 'show']);
+Route::post('/DummyTypePlural', [DummyClassController::class, 'store']);
+Route::patch('/DummyTypePlural/{DummyModelVariable}', [DummyClassController::class, 'update']);
+Route::delete('/DummyTypePlural/{DummyModelVariable}', [DummyClassController::class, 'destroy']);

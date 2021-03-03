@@ -1,6 +1,6 @@
 <?php
 
-namespace uhin\laravel_api\Commands;
+namespace uhin\laravel_api\Console\Commands;
 
 trait BaseCommand
 {

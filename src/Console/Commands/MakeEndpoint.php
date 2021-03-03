@@ -1,6 +1,6 @@
 <?php
 
-namespace uhin\laravel_api\Commands;
+namespace uhin\laravel_api\Console\Commands;
 
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Str;
@@ -41,7 +41,6 @@ class MakeEndpoint extends GeneratorCommand
     /**
      * Execute the console command.
      *
-     * @return mixed
      */
     public function handle()
     {
@@ -49,7 +48,7 @@ class MakeEndpoint extends GeneratorCommand
 
         // Model
         $this->call('make:model', [
-            'name' => "Models/{$model}",
+            'name' => "{$model}",
         ]);
 
         // Migration
@@ -60,7 +59,7 @@ class MakeEndpoint extends GeneratorCommand
         // Factory
         $this->call('make:factory', [
             'name' => "{$model}Factory",
-            '--model' => "Models/{$model}",
+            '--model' => "{$model}",
         ]);
 
         // Seeder
@@ -69,7 +68,7 @@ class MakeEndpoint extends GeneratorCommand
         ]);
         // Make a call to the new seeder in the DatabaseSeeder.php file
         $seederCall = '$this->call(' . Str::plural($model) . 'TableSeeder::class);';
-        $seeder = database_path('seeds/DatabaseSeeder.php');
+        $seeder = database_path('seeders/DatabaseSeeder.php');
         $contents = file_get_contents($seeder);
         if (!Str::contains($contents, $seederCall)) {
             $contents = preg_replace('/(function\s+run.*?\{)(.*?)(\})/s', '${1}${2}' . PHP_EOL . '        ' . $seederCall . PHP_EOL . '    ${3}', $contents);
@@ -100,6 +99,22 @@ class MakeEndpoint extends GeneratorCommand
         $stub = $this->replaceNamespace($stub, $name)->replaceClass($stub, $name);
         $stub = $this->replaceResourceType($stub, $name);
         file_put_contents($destination, PHP_EOL . $stub . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+        // Inject the import into the routes file.
+        $routes = file($destination);
+
+        $index = -1;
+        for ($i=0; $i < count($routes) ; $i++) {
+            if(substr($routes[$i],0,3) ==="use") {
+                $index = $i;
+                break;
+            }
+        }
+
+        if($index > -1) {
+            array_splice($routes,$index,0,"use App\\Http\\Controllers\\".$model . 'Controller;'.PHP_EOL);
+            file_put_contents($destination, $routes,  LOCK_EX);
+        }
     }
 
     /**
