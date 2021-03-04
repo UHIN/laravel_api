@@ -5,9 +5,9 @@
 namespace DummyNamespace;
 
 use Illuminate\Support\Facades\Log;
-use uhin\laravel_api\RabbitBuilder;
+use uhin\laravel_api\Rabbit\RabbitBuilder;
 use uhin\laravel_api\Workers\BaseRabbitWorker;
-use uhin\laravel_api\RabbitReceiver;
+use uhin\laravel_api\Rabbit\RabbitReceiver;
 
 class DummyClass extends BaseRabbitWorker
 {

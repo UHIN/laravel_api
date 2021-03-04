@@ -31,13 +31,13 @@ class UhinServiceProvider extends ServiceProvider
     public function register()
     {
         $this->commands([
-            \uhin\laravel_api\Commands\MakeEndpoint::class,
-            \uhin\laravel_api\Commands\MakeRabbitBuilder::class,
-            \uhin\laravel_api\Commands\MakeWorker::class,
-            \uhin\laravel_api\Commands\WorkerDebug::class,
-            \uhin\laravel_api\Commands\WorkerStart::class,
-            \uhin\laravel_api\Commands\WorkerStop::class,
-            \uhin\laravel_api\Commands\UhinInit::class,
+            \uhin\laravel_api\Console\Commands\MakeEndpoint::class,
+            \uhin\laravel_api\Console\Commands\MakeRabbitBuilder::class,
+            \uhin\laravel_api\Console\Commands\MakeWorker::class,
+            \uhin\laravel_api\Console\Commands\WorkerDebug::class,
+            \uhin\laravel_api\Console\Commands\WorkerStart::class,
+            \uhin\laravel_api\Console\Commands\WorkerStop::class,
+            \uhin\laravel_api\Console\Commands\UhinInit::class,
         ]);
 
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace uhin\laravel_api;
+namespace uhin\laravel_api\Helpers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;

@@ -2,7 +2,7 @@
 
 namespace DummyNamespace;
 
-use uhin\laravel_api\RabbitBuilder as BaseRabbitBuilder;
+use uhin\laravel_api\Rabbit\RabbitBuilder as BaseRabbitBuilder;
 
 class DummyClass extends BaseRabbitBuilder
 {
