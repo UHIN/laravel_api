@@ -5,7 +5,6 @@ add a tag (new version number), and then push the commit and the tag.
 In PHPStorm: Commit, click on log, right click on commit and add tag, push (check push tags).
 
 
-
 For development: 
 
 In a service using this library you will make two changes to the composer.json to do development.
