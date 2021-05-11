@@ -115,6 +115,8 @@ class MakeEndpoint extends GeneratorCommand
             array_splice($routes,$index,0,"use App\\Http\\Controllers\\".$model . 'Controller;'.PHP_EOL);
             file_put_contents($destination, $routes,  LOCK_EX);
         }
+
+        return 0;
     }
 
     /**

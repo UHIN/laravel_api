@@ -4,6 +4,7 @@ namespace uhin\laravel_api\Rabbit;
 
 use Exception;
 use InvalidArgumentException;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Connection\AMQPSSLConnection;
 
 /**
@@ -16,6 +17,7 @@ class RabbitConnectionManager
     /** @var null|object */
     private $connections = [];
     private static $instance = null;
+    private $useSSL;
 
     /**
      * RabbitConnectionManager constructor.
@@ -25,6 +27,7 @@ class RabbitConnectionManager
      */
     protected function __construct()
     {
+        $this->useSSL = config('uhin.rabbit.ssl', false);
         $host = config('uhin.rabbit.host');
         $port = config('uhin.rabbit.port');
         $username = config('uhin.rabbit.username');
@@ -155,16 +158,36 @@ class RabbitConnectionManager
             'keepalive' => $keepalive,
             'heartbeat' => $heartbeat,
         ];
-        $connection = new AMQPSSLConnection(
-            $host,
-            $port,
-            $username,
-            $password,
-            $vhost,
-            $ssl_options,
-            $options,
-            'ssl'
-        );
+
+        if ($this->useSSL) {
+            $connection = new AMQPSSLConnection(
+                $host,
+                $port,
+                $username,
+                $password,
+                $vhost,
+                $ssl_options,
+                $options,
+                'ssl'
+            );
+        } else {
+            $connection = new AMQPStreamConnection(
+                $host,
+                $port,
+                $username,
+                $password,
+                $vhost,
+                $insist,
+                $login_method,
+                $login_response,
+                $locale,
+                $connection_timeout,
+                $read_write_timeout,
+                $context,
+                $keepalive,
+                $heartbeat
+            );
+        }
 
         if (is_null($connection)) {
             return false;

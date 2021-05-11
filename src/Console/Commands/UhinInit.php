@@ -42,6 +42,8 @@ class UhinInit extends Command
 
         $this->removeWebRoutes();
         $this->info('Web routes removed');
+
+        return 0;
     }
 
     private function copyConfig()
@@ -72,6 +74,7 @@ class UhinInit extends Command
         file_put_contents($env, "RABBIT_PORT=" . PHP_EOL, FILE_APPEND | LOCK_EX);
         file_put_contents($env, "RABBIT_USERNAME=" . PHP_EOL, FILE_APPEND | LOCK_EX);
         file_put_contents($env, "RABBIT_PASSWORD=" . PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents($env, "RABBIT_SSL=" . PHP_EOL, FILE_APPEND | LOCK_EX);
         file_put_contents($env, "RABBIT_EXCHANGE=" . PHP_EOL, FILE_APPEND | LOCK_EX);
         file_put_contents($env, "RABBIT_ROUTING_KEY=" . PHP_EOL, FILE_APPEND | LOCK_EX);
         file_put_contents($env, "RABBIT_QUEUE=" . PHP_EOL, FILE_APPEND | LOCK_EX);

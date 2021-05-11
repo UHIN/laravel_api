@@ -51,5 +51,6 @@ class WorkerDebug extends Command
 
         $worker->run();
 
+        return 0;
     }
 }

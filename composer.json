@@ -1,39 +1,39 @@
 {
-    "name": "uhin/laravel_api",
-    "authors": [
-        {
-            "name": "rmclelland",
-            "email": "rmclelland@uhin.org"
-        },
-        {
-            "name": "chejazi",
-            "email": "chejazi@uhin.org"
-        }
-    ],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "require": {
-      "laravel/framework": ">=8.0",
-      "laravel/tinker": ">=1.0",
-      "php-amqplib/php-amqplib": "^2.8",
-      "doctrine/dbal": "^2.8",
-      "ramsey/uuid": "^4.0",
-      "sendgrid/sendgrid": "^7.2",
-        "ext-curl": "*",
-        "ext-json": "*"
+  "name": "uhin/laravel_api",
+  "description": "An API helper library for Laravel.",
+  "authors": [
+    {
+      "name": "rmclelland",
+      "email": "rmclelland@uhin.org"
     },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "uhin\\laravel_api\\": "src/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "uhin\\laravel_api\\Providers\\UhinServiceProvider"
-            ]
-        }
+    {
+      "name": "chejazi",
+      "email": "chejazi@uhin.org"
     }
-
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "laravel/framework": ">=8.0",
+    "laravel/tinker": ">=2.5",
+    "php-amqplib/php-amqplib": "^3.0",
+    "doctrine/dbal": "^3.1",
+    "ramsey/uuid": "^4.1",
+    "sendgrid/sendgrid": "^7.9",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "uhin\\laravel_api\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "uhin\\laravel_api\\Providers\\UhinServiceProvider"
+      ]
+    }
+  }
 }

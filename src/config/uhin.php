@@ -26,6 +26,7 @@ return [
         'port'                  => env('RABBIT_PORT', 5672),
         'username'              => env('RABBIT_USERNAME', null),
         'password'              => env('RABBIT_PASSWORD', null),
+        'ssl'                   => env('RABBIT_SSL', false),
         'exchange'              => env('RABBIT_EXCHANGE', null),
         'routing_key'           => env('RABBIT_ROUTING_KEY', null),
         'queue'                 => env('RABBIT_QUEUE', null),

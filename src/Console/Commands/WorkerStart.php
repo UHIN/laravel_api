@@ -59,5 +59,7 @@ class WorkerStart extends Command
             $worker->start(basename($filename, ".php"));
 
         }
+
+        return 0;
     }
 }

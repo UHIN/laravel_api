@@ -43,6 +43,8 @@ class WorkerDrain extends Command
         );
 
         $this->comment('Workers are draining...');
+
+        return 0;
     }
 
     /**
