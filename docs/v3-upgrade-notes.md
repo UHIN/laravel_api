@@ -13,7 +13,8 @@
 7. Routes syntax need to be updated. The Laravel upgrade guide states this is optional, but it is not compatible with new projects out of the box, so the uhin laravel api has been updated to use the new syntax.
 8. All references to the Rabbit libraries need to be updated to reflect the new namespace (see File Changes below)
 9. All references to full text search, sendgrid and pagerduty need to be updated to reflect new namespaces (see File Changes below)
-10. If the service uses Rabbit, you will need to add a new environment var and config value:
+10. Make sure that any env settings (check prod.env, uat.env, and dev.env) that have a url to another service do not have a trailing slash. For example, references to 'https://trading-partner-service.peks.uhin.org/' should be changed to 'https://trading-partner-service.peks.uhin.org'.
+11. If the service uses Rabbit, you will need to add a new environment var and config value:
     - Add `'ssl' => env('RABBIT_SSL', false),` to the `config/uhin.php` file inside of the `rabbit` section.
     - Add `RABBIT_SSL=false` to the following files:
         - `.env`
@@ -22,6 +23,7 @@
         - `deploy/uat/uat.env`
         - `deploy/prod/prod.env`
     - NOTE: If your service does use SSL for Rabbit, make sure to set all of the values above to `true` instead of `false`.
+12. Laravel will no longer accept `1` and `true` as equivalent values during validation. Any validators that use this assumption will need to explicitly use `true`. The following regex should be able to uncover any of the potential validators that need to be changed: `[a-zA-Z_]+,[0,1]`
 
 ## Changes
 
