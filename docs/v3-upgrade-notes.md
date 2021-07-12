@@ -24,6 +24,19 @@
         - `deploy/prod/prod.env`
     - NOTE: If your service does use SSL for Rabbit, make sure to set all of the values above to `true` instead of `false`.
 12. Laravel will no longer accept `1` and `true` as equivalent values during validation. Any validators that use this assumption will need to explicitly use `true`. The following regex should be able to uncover any of the potential validators that need to be changed: `[a-zA-Z_]+,[0,1]`
+13. The default date format for Resources/Models has changed which will potentially break DB writes and the api-gateway's deserializer, so we need to override the `serializeDate` function in every model of the service being upgraded. Add this function to every Model in the service:
+    ```php
+    /**
+     * Prepare a date for array / JSON serialization.
+     *
+     * @param  \DateTimeInterface  $date
+     * @return string
+     */
+    protected function serializeDate(DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+    ```
 
 ## Changes
 
