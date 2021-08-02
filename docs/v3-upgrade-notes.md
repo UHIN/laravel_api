@@ -4,8 +4,8 @@
 
 ## Steps to Upgrade
 
-1. Follow the Laravel Upgrade guide to Laravel v6: https://laravel.com/docs/8.x/upgrade
-2. Follow the Laravel Upgrade guide to Laravel v7: https://laravel.com/docs/8.x/upgrade
+1. Follow the Laravel Upgrade guide to Laravel v6: https://laravel.com/docs/6.x/upgrade
+2. Follow the Laravel Upgrade guide to Laravel v7: https://laravel.com/docs/7.x/upgrade
 3. Follow the Laravel Upgrade guide to Laravel v8: https://laravel.com/docs/8.x/upgrade
 4. Replace the exception handler in app/Exceptions/Handler.php with current version
 5. All Controllers need the namespace updated for the UhinApi (see File Changes below)
