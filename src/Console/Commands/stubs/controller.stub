@@ -20,7 +20,9 @@ class DummyClass extends Controller
     {
         $query = UhinApi::getQueryBuilder(DummyModel::class);
         $query = UhinApi::parseAll($query, $request);
-        return DummyModelResource::collection($query->get());
+        $resource = DummyModelResource::collection($query->get());
+        $response = $resource->response();
+        return $response;
     }
 
     /**
@@ -34,7 +36,10 @@ class DummyClass extends Controller
     {
         $query = UhinApi::getQueryBuilder(DummyModel::class);
         $query = UhinApi::parseFields($query, $request);
-        return new DummyModelResource($query->findOrFail($DummyModelVariableId));
+        $resource = new DummyModelResource($query->findOrFail($DummyModelVariableId));
+        $response = $resource->response();
+        return $response;
+
     }
 
     /**
@@ -71,7 +76,9 @@ class DummyClass extends Controller
     {
         $DummyModelVariable = UhinApi::fillModel($DummyModelVariable, $request);
         $DummyModelVariable->save();
-        return new DummyModelResource($DummyModelVariable);
+        $resource = new DummyModelResource($DummyModelVariable);
+        $response = $resource->response();
+        return $response;
     }
 
     /**
