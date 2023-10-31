@@ -136,6 +136,9 @@ class UhinApi
                             $query->fullTextSearch($value);
                         } else {
                             switch ($operator) {
+                                case 'or-in':
+                                    $query->orWhereIn($column, explode(',', $value));
+                                    break;
                                 case 'in':
                                     $query->whereIn($column, explode(',', $value));
                                     break;
