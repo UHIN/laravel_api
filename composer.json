@@ -14,10 +14,10 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "laravel/framework": ">=8.0",
-    "laravel/tinker": ">=2.5",
+    "laravel/framework": "^12.0",
+    "laravel/tinker": "^2.9",
     "php-amqplib/php-amqplib": "^3.0",
-    "doctrine/dbal": "^3.1",
+    "doctrine/dbal": "^4.0",
     "ramsey/uuid": "^4.1",
     "sendgrid/sendgrid": "^7.9",
     "ext-curl": "*",
