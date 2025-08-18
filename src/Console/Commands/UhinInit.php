@@ -4,6 +4,7 @@ namespace uhin\laravel_api\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class UhinInit extends Command
 {
@@ -43,6 +44,9 @@ class UhinInit extends Command
 
         $this->removeWebRoutes();
         $this->info('Web routes removed');
+
+        $this->modifyBootstrapFile();
+        $this->info('Bootstrap file modified to include API routes');
 
         return 0;
     }
@@ -140,5 +144,32 @@ class UhinInit extends Command
             $contents = preg_replace('/(\$middlewareGroups.*?\\\'api\\\'.*?\[.*?)(\\\'throttle.*?\\\')(.*?])/s', '${1}// ${2}${3}', $contents);
             File::put($httpKernel, $contents);
         }
+    }
+    
+    private function modifyBootstrapFile()
+    {
+        $bootstrapFile = base_path('bootstrap/app.php');
+        if (!File::exists($bootstrapFile)) {
+            return;
+        }
+
+        $content = File::get($bootstrapFile);
+        $routeAddition = '        then: function () {
+            Route::middleware(\'api\')
+                ->namespace(\'uhin\laravel_api\Controllers\')
+                ->group(base_path(\'routes/api.php\'));
+        },';
+
+        $pattern = '/->withRouting\((.*?)\)\n/s';
+
+        if (preg_match($pattern, $content, $matches)) {
+            $existingRouting = trim($matches[1]);
+            if (!Str::contains($existingRouting, 'then:')) {
+                $newRouting = $existingRouting . ",\n" . $routeAddition;
+                $content = str_replace($existingRouting, $newRouting, $content);
+            }
+        }
+
+        File::put($bootstrapFile, $content);
     }
 }
