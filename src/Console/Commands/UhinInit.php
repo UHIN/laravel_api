@@ -42,8 +42,14 @@ class UhinInit extends Command
         $this->removeUsersAndAuth();
         $this->info('Users and authentication stripped out');
 
-        $this->removeWebRoutes();
-        $this->info('Web routes removed');
+        $this->removeWebRoutesAndFrontendAssets();
+        $this->info('Web routes and front-end assets removed');
+
+        $this->removeDatabaseFolders();
+        $this->info('Database factories and seeders removed');
+
+        $this->modifyBootstrapFile();
+        $this->info('Bootstrap file modified to include API routes');
 
         $this->modifyBootstrapFile();
         $this->info('Bootstrap file modified to include API routes');
@@ -109,41 +115,21 @@ class UhinInit extends Command
         }
     }
 
-    private function removeWebRoutes()
+    private function removeWebRoutesAndFrontendAssets()
     {
         $this->deleteFile(base_path('routes/web.php'));
-        touch(base_path('routes/web.php'));
+        $this->deleteDirectory(base_path('resources'));
+        $this->deleteFile(public_path('favicon.ico'));
+        $this->deleteFile(public_path('mix-manifest.json'));
+        $this->deleteDirectory(public_path('build'));
+    }
 
-        // Since the RouteServiceProvider has changed in Laravel 12,
-        // we will clear out the default routes entirely.
-        $provider = app_path('Providers/RouteServiceProvider.php');
-        if (File::exists($provider)) {
-            $contents = File::get($provider);
-            $contents = str_replace([
-                'use Illuminate\Support\Facades\Route;',
-                'Route::middleware(\'web\')->group(base_path(\'routes/web.php\'));',
-                'Route::prefix(\'api\')->middleware(\'api\')->group(base_path(\'routes/api.php\'));'
-            ], [
-                'use Illuminate\Support\Facades\Route;',
-                '',
-                ''
-            ], $contents);
-            File::put($provider, $contents);
-        }
-
-        // Remove the old api routes and copy the new one
-        $stub = __DIR__ . '/stubs/api-routes.stub';
-        $destination = base_path('routes/api.php');
-        $this->deleteFile($destination);
-        $this->copyStub($stub, $destination);
-        
-        // As the middleware group is not present, we can safely remove this logic
-        $httpKernel = app_path('Http/Kernel.php');
-        if (File::exists($httpKernel)) {
-            $contents = File::get($httpKernel);
-            $contents = preg_replace('/(\$middlewareGroups.*?\\\'api\\\'.*?\[.*?)(\\\'throttle.*?\\\')(.*?])/s', '${1}// ${2}${3}', $contents);
-            File::put($httpKernel, $contents);
-        }
+    private function removeDatabaseFolders()
+    {
+        $this->deleteFile(database_path('factories/UserFactory.php'));
+        $this->deleteFiles(database_path('migrations'));
+        $this->deleteDirectory(database_path('factories'));
+        $this->deleteDirectory(database_path('seeders'));
     }
     
     private function modifyBootstrapFile()
@@ -154,22 +140,43 @@ class UhinInit extends Command
         }
 
         $content = File::get($bootstrapFile);
+        
+        if (!Str::contains($content, 'use Illuminate\Support\Facades\Route;')) {
+            $content = str_replace('use Illuminate\Foundation\Application;', "use Illuminate\Foundation\Application;\nuse Illuminate\Support\Facades\Route;", $content);
+        }
+
         $routeAddition = '        then: function () {
             Route::middleware(\'api\')
                 ->namespace(\'uhin\laravel_api\Controllers\')
                 ->group(base_path(\'routes/api.php\'));
         },';
 
-        $pattern = '/->withRouting\((.*?)\)\n/s';
+        $pattern = '/->withRouting\((.*?)\s*\)\s*->(withMiddleware|withExceptions|create)/s';
 
         if (preg_match($pattern, $content, $matches)) {
-            $existingRouting = trim($matches[1]);
-            if (!Str::contains($existingRouting, 'then:')) {
-                $newRouting = $existingRouting . ",\n" . $routeAddition;
-                $content = str_replace($existingRouting, $newRouting, $content);
+            $existingRouting = $matches[1];
+            $nextMethod = $matches[2];
+
+            $existingRouting = preg_replace('/^.*?web: __DIR__.*?,\s*/s', '', $existingRouting);
+            
+            $trimmedRouting = trim($existingRouting, " \n\r\t,");
+
+            if (!Str::contains($trimmedRouting, 'uhin\laravel_api\Controllers')) {
+                if (!empty($trimmedRouting)) {
+                    $trimmedRouting .= ",";
+                }
+
+                $newRoutingBlock = "->withRouting(\n" . $trimmedRouting . "\n" . $routeAddition . "\n    )->" . $nextMethod;
+
+                $content = str_replace($matches[0], $newRoutingBlock, $content);
+                File::put($bootstrapFile, $content);
             }
         }
 
-        File::put($bootstrapFile, $content);
+        // Add new api Routes file
+        $stub = __DIR__ . '/stubs/api-routes.stub';
+        $destination = base_path('routes/api.php');
+        $this->deleteFile($destination);
+        $this->copyStub($stub, $destination);
     }
 }
