@@ -30,6 +30,12 @@ class UhinInit extends Command
      */
     public function handle()
     {
+        $this->info('Running Laravel\'s official API installation command...');
+        $this->call('install:api', ['--without-migration-prompt' => true]);
+
+        $this->removeSanctum();
+        $this->info('Sanctum has been removed');
+
         $this->copyConfig();
         $this->info('Config file copied');
 
@@ -39,22 +45,56 @@ class UhinInit extends Command
         $this->fillEnv();
         $this->info('Environment variables copied');
 
-        $this->removeUsersAndAuth();
-        $this->info('Users and authentication stripped out');
-
         $this->removeWebRoutesAndFrontendAssets();
         $this->info('Web routes and front-end assets removed');
 
         $this->removeDatabaseFolders();
         $this->info('Database factories and seeders removed');
 
-        $this->modifyBootstrapFile();
-        $this->info('Bootstrap file modified to include API routes');
-
-        $this->modifyBootstrapFile();
-        $this->info('Bootstrap file modified to include API routes');
+        $this->cleanupBootstrapFile();
+        $this->info('Cleaned up bootstrap file.');
 
         return 0;
+    }
+
+    private function removeSanctum()
+    {
+        $this->info('Manually clearing service provider, packages and config caches...');
+        $servicesCacheFile = base_path('bootstrap/cache/services.php');
+        if (File::exists($servicesCacheFile)) {
+            File::delete($servicesCacheFile);
+        }
+        $configCacheFile = base_path('bootstrap/cache/config.php');
+        if (File::exists($configCacheFile)) {
+            File::delete($configCacheFile);
+        }
+        $packagesCacheFile = base_path('bootstrap/cache/packages.php');
+        if (File::exists($packagesCacheFile)) {
+            File::delete($packagesCacheFile);
+        }
+
+        $this->info('Removing laravel/sanctum package from composer.json...');
+        $composerFile = base_path('composer.json');
+        if (File::exists($composerFile)) {
+            $content = File::get($composerFile);
+            $content = preg_replace('/"laravel\/sanctum":.*?,/s', '', $content);
+            File::put($composerFile, $content);
+        }
+
+        $this->info('Running composer update to clean up Sanctum files...');
+        exec("composer update");
+
+        $routesFile = base_path('routes/api.php');
+        if (File::exists($routesFile)) {
+            $content = File::get($routesFile);
+            $pattern = '/Route::get\(\'\/user\', function \(Request \$request\) \{\s*return \$request->user\(\);\s*\}\)->middleware\(\'auth:sanctum\'\);/s';
+            $content = preg_replace($pattern, '', $content);
+            File::put($routesFile, $content);
+        }
+
+        $this->info('Removing sanctum config file...');
+        File::delete(config_path('sanctum.php'));
+
     }
 
     private function copyConfig()
@@ -94,27 +134,6 @@ class UhinInit extends Command
         }
     }
 
-    private function removeUsersAndAuth()
-    {
-        $this->deleteFile(database_path('factories/UserFactory.php'));
-        $this->deleteFiles(database_path('migrations'));
-        $this->deleteFile(app_path('Models/User.php'));
-        $this->deleteDirectory(app_path('Http/Controllers/Auth'));
-        // put an empty file here so that the folder will be pushed to git even if no factories are created
-        file_put_contents(database_path('factories/.gitignore'), '');
-        // put an empty file here so that the folder will be pushed to git even if no migrations are created
-        file_put_contents(database_path('migrations/.gitignore'), '');
-
-        // Remove the HasApiTokens trait from the User model if it exists
-        $userModelPath = app_path('Models/User.php');
-        if (File::exists($userModelPath)) {
-            $contents = File::get($userModelPath);
-            $contents = str_replace('use Laravel\Sanctum\HasApiTokens;', '', $contents);
-            $contents = str_replace('HasApiTokens, ', '', $contents);
-            File::put($userModelPath, $contents);
-        }
-    }
-
     private function removeWebRoutesAndFrontendAssets()
     {
         $this->deleteFile(base_path('routes/web.php'));
@@ -122,17 +141,19 @@ class UhinInit extends Command
         $this->deleteFile(public_path('favicon.ico'));
         $this->deleteFile(public_path('mix-manifest.json'));
         $this->deleteDirectory(public_path('build'));
+        $this->deleteFile(base_path('package.json'));
+        $this->deleteFile(base_path('vite.config.js'));
     }
 
     private function removeDatabaseFolders()
     {
-        $this->deleteFile(database_path('factories/UserFactory.php'));
+        $this->deleteFile(app_path('Models/User.php'));
         $this->deleteFiles(database_path('migrations'));
         $this->deleteDirectory(database_path('factories'));
         $this->deleteDirectory(database_path('seeders'));
     }
-    
-    private function modifyBootstrapFile()
+
+    private function cleanupBootstrapFile()
     {
         $bootstrapFile = base_path('bootstrap/app.php');
         if (!File::exists($bootstrapFile)) {
@@ -141,42 +162,9 @@ class UhinInit extends Command
 
         $content = File::get($bootstrapFile);
         
-        if (!Str::contains($content, 'use Illuminate\Support\Facades\Route;')) {
-            $content = str_replace('use Illuminate\Foundation\Application;', "use Illuminate\Foundation\Application;\nuse Illuminate\Support\Facades\Route;", $content);
-        }
-
-        $routeAddition = '        then: function () {
-            Route::middleware(\'api\')
-                ->namespace(\'uhin\laravel_api\Controllers\')
-                ->group(base_path(\'routes/api.php\'));
-        },';
-
-        $pattern = '/->withRouting\((.*?)\s*\)\s*->(withMiddleware|withExceptions|create)/s';
-
-        if (preg_match($pattern, $content, $matches)) {
-            $existingRouting = $matches[1];
-            $nextMethod = $matches[2];
-
-            $existingRouting = preg_replace('/^.*?web: __DIR__.*?,\s*/s', '', $existingRouting);
-            
-            $trimmedRouting = trim($existingRouting, " \n\r\t,");
-
-            if (!Str::contains($trimmedRouting, 'uhin\laravel_api\Controllers')) {
-                if (!empty($trimmedRouting)) {
-                    $trimmedRouting .= ",";
-                }
-
-                $newRoutingBlock = "->withRouting(\n" . $trimmedRouting . "\n" . $routeAddition . "\n    )->" . $nextMethod;
-
-                $content = str_replace($matches[0], $newRoutingBlock, $content);
-                File::put($bootstrapFile, $content);
-            }
-        }
-
-        // Add new api Routes file
-        $stub = __DIR__ . '/stubs/api-routes.stub';
-        $destination = base_path('routes/api.php');
-        $this->deleteFile($destination);
-        $this->copyStub($stub, $destination);
+        $pattern = '/web: __DIR__.*?routes\/web\.php\',/s';
+        $content = preg_replace($pattern, '', $content);
+        
+        File::put($bootstrapFile, $content);
     }
 }

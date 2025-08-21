@@ -56,25 +56,6 @@ class MakeEndpoint extends GeneratorCommand
             'name' => "create_" . Str::snake(Str::plural($model)) . "_table",
         ]);
 
-        // Factory
-        $this->call('make:factory', [
-            'name' => "{$model}Factory",
-            '--model' => "{$model}",
-        ]);
-
-        // Seeder
-        $this->call('make:seed', [
-            'name' => Str::plural($model) . "TableSeeder",
-        ]);
-        // Make a call to the new seeder in the DatabaseSeeder.php file
-        $seederCall = '$this->call(' . Str::plural($model) . 'TableSeeder::class);';
-        $seeder = database_path('seeders/DatabaseSeeder.php');
-        $contents = file_get_contents($seeder);
-        if (!Str::contains($contents, $seederCall)) {
-            $contents = preg_replace('/(function\s+run.*?\{)(.*?)(\})/s', '${1}${2}' . PHP_EOL . '        ' . $seederCall . PHP_EOL . '    ${3}', $contents);
-            file_put_contents($seeder, $contents);
-        }
-
         // Resource
         $this->stub = __DIR__ . '/stubs/resource.stub';
         $this->namespace = '\Http\Resources';
