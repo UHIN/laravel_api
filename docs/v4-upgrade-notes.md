@@ -23,6 +23,10 @@ The `uhin:init` command has been enhanced to remove all front-end and web-relate
 * `package.json`
 * `vite.config.js`
 * `routes/web.php`
+* `Models/User.php`
+* `bootstrap/packages.php`
+* `bootstrap/services.php`
+* `public/favicon.ico`
 * The entire root `resources` directory
 * Default database factories and seeders
 

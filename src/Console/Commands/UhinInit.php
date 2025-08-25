@@ -59,6 +59,9 @@ class UhinInit extends Command
 
     private function removeSanctum()
     {
+        $this->info('Removing sanctum config file...');
+        File::delete(config_path('sanctum.php'));
+        
         $this->info('Manually clearing service provider, packages and config caches...');
         $servicesCacheFile = base_path('bootstrap/cache/services.php');
         if (File::exists($servicesCacheFile)) {
@@ -91,10 +94,6 @@ class UhinInit extends Command
             $content = preg_replace($pattern, '', $content);
             File::put($routesFile, $content);
         }
-
-        $this->info('Removing sanctum config file...');
-        File::delete(config_path('sanctum.php'));
-
     }
 
     private function copyConfig()
@@ -137,6 +136,7 @@ class UhinInit extends Command
     private function removeWebRoutesAndFrontendAssets()
     {
         $this->deleteFile(base_path('routes/web.php'));
+        $this->deleteFile(base_path('routes/console.php'));
         $this->deleteDirectory(base_path('resources'));
         $this->deleteFile(public_path('favicon.ico'));
         $this->deleteFile(public_path('mix-manifest.json'));
