@@ -126,7 +126,7 @@ class RabbitConnectionManager
         $context = null,
         bool $keepalive = false,
         int $heartbeat = 0,
-        array $ssl_options
+        array $ssl_options = []
     )
     {
         // host
@@ -306,7 +306,7 @@ class RabbitConnectionManager
         $context = null,
         bool $keepalive = false,
         int $heartbeat = 0,
-        array $ssl_options
+        array $ssl_options = []
     )
     {
         if (!$this->removeConnection($name)) {
