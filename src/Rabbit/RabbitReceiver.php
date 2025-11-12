@@ -36,7 +36,13 @@ class RabbitReceiver
     /** @var null|string */
     private $connectionName = 'default';
 
-    public function __construct(RabbitBuilder $builder = null, ?string $connectionName = 'default')
+    /** @var null|string */
+    private $exchange;
+
+    /** @var null|string */
+    private $routingKey;
+
+    public function __construct(?RabbitBuilder $builder = null, ?string $connectionName = 'default')
     {
 
         if(!is_null($builder))
