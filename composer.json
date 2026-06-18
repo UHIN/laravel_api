@@ -19,7 +19,7 @@
     "php-amqplib/php-amqplib": "^3.0",
     "doctrine/dbal": "^4.0",
     "ramsey/uuid": "^4.1",
-    "sendgrid/sendgrid": "^7.9",
+    "sendgrid/sendgrid": "^8.0",
     "ext-curl": "*",
     "ext-json": "*"
   },
