@@ -3,9 +3,11 @@
 namespace uhin\laravel_api\Rabbit;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Connection\AMQPSSLConnection;
+use Throwable;
 
 /**
  * Class RabbitConnectionManager
@@ -261,14 +263,37 @@ class RabbitConnectionManager
         }
         $closingChannel = $this->getChannel($name);
         $closingConnection = $this->getConnection($name);
-        if ($closingChannel) {
-            $closingChannel->close();
+
+        // Closing is best-effort. This runs from __destruct() at the end of every request, after the
+        // response has been sent; anything thrown here reaches the global exception handler, which tries
+        // to send a second response and floods the logs with "headers already sent" errors.
+        if ($closingChannel && $closingChannel->is_open()) {
+            $this->closeQuietly(fn () => $closingChannel->close(), $name, 'channel');
         }
-        if ($closingConnection) {
-            $closingConnection->close();
+        if ($closingConnection && $closingConnection->isConnected()) {
+            $this->closeQuietly(fn () => $closingConnection->close(), $name, 'connection');
         }
+
         unset($this->connections[$name]);
         return true;
+    }
+
+    /**
+     * Runs a close call, logging (but never throwing) any failure.
+     */
+    private function closeQuietly(callable $close, string $name, string $what): void
+    {
+        try {
+            $close();
+        } catch (Throwable $e) {
+            try {
+                Log::warning("Rabbit {$what} close failed: ".get_class($e).': '.$e->getMessage(), [
+                    'connection' => $name,
+                ]);
+            } catch (Throwable) {
+                // Logging may be unavailable during shutdown.
+            }
+        }
     }
 
     /**
