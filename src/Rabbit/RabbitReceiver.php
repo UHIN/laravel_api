@@ -24,6 +24,9 @@ use RuntimeException;
  */
 class RabbitReceiver
 {
+    /** @var mixed */
+    public mixed $exchange;
+
     /** @var null|string */
     private $queue = null;
 
@@ -36,7 +39,10 @@ class RabbitReceiver
     /** @var null|string */
     private $connectionName = 'default';
 
-    public function __construct(RabbitBuilder $builder = null, ?string $connectionName = 'default')
+    /** @var mixed */
+    public $routingKey;
+
+    public function __construct(?RabbitBuilder $builder = null, ?string $connectionName = 'default')
     {
 
         if(!is_null($builder))
